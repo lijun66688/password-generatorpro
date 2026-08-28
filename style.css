@@ -1599,3 +1599,360 @@ input[type="checkbox"]{
     }
 
 }
+
+
+
+/* =========================
+   iPhone 8 / 小屏幕优化
+========================= */
+
+@media (max-width: 430px){
+
+    body{
+        background:
+        linear-gradient(
+            135deg,
+            #6a5af9,
+            #8fd3fe
+        );
+
+        min-height:100vh;
+    }
+
+
+    .container{
+        padding:8px;
+        display:block;
+    }
+
+
+    .card{
+        width:100%;
+        max-width:none;
+
+        padding:14px;
+
+        border-radius:20px;
+
+        box-shadow:
+            0 8px 25px
+            rgba(0,0,0,.15);
+    }
+
+
+    .title{
+        font-size:21px;
+        margin-bottom:16px;
+    }
+
+
+    /* 首页解锁区域 */
+
+    #lockPage .box{
+        padding:16px;
+        margin-bottom:10px;
+    }
+
+
+    #lockPage h3{
+        font-size:18px;
+        margin-top:4px;
+    }
+
+
+    #masterPassword{
+        font-size:16px;
+        height:46px;
+    }
+
+
+    #unlock{
+        width:100%;
+        height:46px;
+        margin-top:10px;
+        font-size:15px;
+    }
+
+
+    /* Tab */
+
+    .tabs{
+        gap:6px;
+        margin-bottom:14px;
+    }
+
+
+    .tabs button{
+        padding:11px 5px;
+        font-size:13px;
+        border-radius:12px;
+    }
+
+
+    /* 普通盒子 */
+
+    .box{
+        padding:13px;
+        border-radius:15px;
+        margin-bottom:12px;
+    }
+
+
+    .box h3{
+        font-size:16px;
+        margin-top:2px;
+    }
+
+
+    /* 输入框 */
+
+    input,
+    select{
+        min-height:44px;
+        padding:10px 11px;
+        font-size:16px;
+        border-radius:11px;
+    }
+
+
+    /* 普通按钮 */
+
+    button{
+        min-height:44px;
+        padding:10px 12px;
+        font-size:14px;
+        border-radius:12px;
+    }
+
+
+    /* 按钮区域不要太挤 */
+
+    .btns{
+        gap:8px;
+        margin-top:12px;
+    }
+
+
+    /* 密码库 */
+
+    .vault-item{
+        padding:13px;
+        border-radius:15px;
+    }
+
+
+    .vault-title{
+        font-size:16px;
+    }
+
+
+    .vault-actions{
+        gap:6px;
+    }
+
+
+    .vault-actions button{
+        padding:9px 6px;
+        font-size:12px;
+    }
+
+
+    /* =====================
+       笔记顶部
+    ===================== */
+
+    .notes-header{
+        gap:8px;
+        margin-bottom:10px;
+    }
+
+
+    .notes-title{
+        font-size:20px;
+    }
+
+
+    .notes-header-actions{
+        display:grid;
+        grid-template-columns:
+            1fr 1fr 2fr;
+
+        width:100%;
+        gap:6px;
+    }
+
+
+    .notes-header-actions button{
+        width:100%;
+        padding:9px 5px;
+        font-size:12px;
+    }
+
+
+    /* =====================
+       笔记编辑器
+    ===================== */
+
+    .note-editor{
+        min-height:360px;
+        padding:14px;
+
+        font-size:16px;
+        line-height:1.75;
+    }
+
+
+    .editor-topbar{
+        padding:8px;
+    }
+
+
+    .editor-tools{
+        display:grid;
+
+        grid-template-columns:
+            repeat(4, 1fr);
+
+        gap:5px;
+    }
+
+
+    .editor-tools button{
+        width:100%;
+        min-width:0;
+
+        min-height:38px;
+
+        padding:6px 3px;
+
+        font-size:12px;
+
+        border-radius:9px;
+    }
+
+
+    /* 笔记卡片 */
+
+    .note-card{
+        padding:13px;
+        border-radius:15px;
+    }
+
+
+    .note-card-title{
+        font-size:16px;
+    }
+
+
+    .note-card-preview{
+        font-size:14px;
+        line-height:1.55;
+    }
+
+
+    .note-buttons{
+        display:grid;
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap:6px;
+    }
+
+
+    .note-buttons button{
+        width:100%;
+        padding:9px 5px;
+        font-size:12px;
+    }
+
+
+    /* 分类按钮 */
+
+    .note-categories{
+        grid-template-columns:
+            repeat(2,1fr);
+
+        gap:6px;
+    }
+
+
+    .note-category{
+        padding:9px 5px;
+        font-size:12px;
+    }
+
+
+    /* 编辑笔记顶部 */
+
+    .note-editor-header{
+        gap:6px;
+        padding:
+            8px 2px 12px;
+    }
+
+
+    .note-back-btn{
+        padding:8px 9px;
+        font-size:12px;
+    }
+
+
+    .note-editor-title{
+        font-size:15px;
+    }
+
+
+    .note-save-status{
+        font-size:10px;
+    }
+
+}
+
+
+/* =========================
+   特别针对 iPhone 8 宽度
+   375px
+========================= */
+
+@media (max-width:390px){
+
+    .card{
+        padding:12px;
+    }
+
+
+    .title{
+        font-size:20px;
+    }
+
+
+    .tabs button{
+        font-size:12px;
+        padding:10px 3px;
+    }
+
+
+    .editor-tools{
+        grid-template-columns:
+            repeat(4,1fr);
+    }
+
+
+    .editor-tools button{
+        font-size:11px;
+    }
+
+
+    .note-editor{
+        min-height:350px;
+        padding:12px;
+    }
+
+
+    .note-buttons button{
+        font-size:11px;
+    }
+
+}
+
