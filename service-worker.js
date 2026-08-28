@@ -1,72 +1,205 @@
+// =====================================
+// Secure Vault Pro PWA
+// Offline Service Worker
+// =====================================
+
+
+const CACHE_NAME =
+"secure-vault-v1";
+
+
 
 // ===============================
-// Password Generator Pro PWA
-// Offline Cache Service Worker
+// 只缓存程序文件
+// 不缓存用户密码数据
 // ===============================
 
-const CACHE_NAME = "password-pro-v1";
 
-// 需要缓存的核心文件（离线可用）
-const FILES_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./app.js",
-  "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png"
+const FILES_TO_CACHE=[
+
+
+"./",
+
+"./index.html",
+
+"./style.css",
+
+"./crypto.js",
+
+"./vault.js",
+
+"./security.js",
+
+"./health.js",
+
+"./app.js",
+
+"./manifest.json",
+
+
+"./icon-192.png",
+
+"./icon-512.png"
+
+
 ];
 
-// ===============================
-// 安装阶段：缓存文件
-// ===============================
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
-  );
 
-  self.skipWaiting();
+
+
+// ===============================
+// 安装
+// ===============================
+
+
+self.addEventListener(
+"install",
+event=>{
+
+
+event.waitUntil(
+
+
+caches.open(
+CACHE_NAME
+)
+
+.then(cache=>{
+
+
+return cache.addAll(
+FILES_TO_CACHE
+);
+
+
+})
+
+
+);
+
+
+
+self.skipWaiting();
+
+
 });
 
-// ===============================
-// 激活阶段：清理旧缓存
-// ===============================
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
-  );
 
-  self.clients.claim();
+
+
+
+
+// ===============================
+// 激活
+// 清理旧版本
+// ===============================
+
+
+self.addEventListener(
+"activate",
+event=>{
+
+
+event.waitUntil(
+
+
+caches.keys()
+
+.then(keys=>{
+
+
+return Promise.all(
+
+
+keys.map(key=>{
+
+
+if(
+key!==CACHE_NAME
+){
+
+
+return caches.delete(key);
+
+
+}
+
+
+})
+
+
+);
+
+
+})
+
+
+);
+
+
+
+self.clients.claim();
+
+
 });
 
-// ===============================
-// 请求拦截：优先离线缓存
-// ===============================
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // 如果缓存存在，直接返回
-      if (response) {
-        return response;
-      }
 
-      // 否则去网络请求
-      return fetch(event.request).then((res) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, res.clone());
-          return res;
-        });
-      });
-    })
-  );
+
+
+
+
+
+// ===============================
+// 请求处理
+// Cache First
+// ===============================
+
+
+self.addEventListener(
+"fetch",
+event=>{
+
+
+const request=
+event.request;
+
+
+
+// 只处理GET
+
+if(
+request.method!=="GET"
+)
+return;
+
+
+
+event.respondWith(
+
+
+caches.match(request)
+
+.then(cacheResponse=>{
+
+
+if(cacheResponse){
+
+
+return cacheResponse;
+
+
+}
+
+
+
+return fetch(request);
+
+
+})
+
+
+);
+
+
+
 });

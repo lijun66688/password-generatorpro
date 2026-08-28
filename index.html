@@ -1,131 +1,1029 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 
 <head>
 
 <meta charset="UTF-8">
 
-<!-- ⭐ 手机适配 + 锁定缩放 -->
 <meta name="viewport"
-content="width=device-width,
-initial-scale=1,
-maximum-scale=1,
-user-scalable=no,
-viewport-fit=cover">
+content="width=device-width,initial-scale=1.0">
 
-<title>Password Generator Pro</title>
+<title>Secure Vault Pro</title>
 
-<!-- CSS -->
-<link rel="stylesheet" href="style.css">
 
-<!-- PWA核心 -->
 <link rel="manifest" href="manifest.json">
 
-<!-- 图标 -->
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
 
-<!-- iOS全屏 -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Password Generator Pro">
 
-<!-- Android主题色 -->
 <meta name="theme-color" content="#3B82F6">
+
+
+<meta name="apple-mobile-web-app-capable"
+content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style"
+content="black-translucent">
+
+
+<link rel="apple-touch-icon"
+href="icon-192.png">
+
 
 </head>
 
+
 <body>
+
 
 <div class="container">
 
-  <div class="card">
 
-    <!-- 标题 -->
-    <div class="title">
-      🔐 Password Generator Pro
-    </div>
+<div class="card">
 
-    <!-- 主体 -->
-    <div class="main">
 
-      <!-- 左侧 -->
-      <div class="left">
+<div class="title">
 
-        <div class="box">
-          <label>密码长度</label>
-          <input type="range" id="length" min="4" max="128" value="12">
-          <input type="number" id="lenNum" value="12" min="4" max="128">
-        </div>
-
-        <div class="box">
-          <label>字符类型</label>
-
-          <label><input type="checkbox" id="upper" checked> 大写</label>
-          <label><input type="checkbox" id="lower" checked> 小写</label>
-          <label><input type="checkbox" id="num" checked> 数字</label>
-          <label><input type="checkbox" id="sym" checked> 符号</label>
-
-        </div>
-
-      </div>
-
-      <!-- 右侧 -->
-      <div class="right">
-
-        <div class="box">
-          <label>生成密码</label>
-          <input type="text" id="output" readonly>
-        </div>
-
-        <div class="box">
-          <label>密码强度</label>
-          <div class="bar">
-            <div id="barFill"></div>
-          </div>
-          <div id="text"></div>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- 按钮 -->
-    <div class="btns">
-
-      <button id="gen">生成密码</button>
-      <button id="copy">复制密码</button>
-      <button id="clear">清空</button>
-      <button id="save">保存TXT</button>
-
-    </div>
-
-    <!-- 历史记录 -->
-    <div class="history">
-
-      <div class="history-title">
-        历史记录（最多20条）
-      </div>
-
-      <div id="list"></div>
-
-    </div>
-
-  </div>
+🔐 Secure Vault Pro
 
 </div>
 
-<!-- JS -->
+
+
+<!-- ==========================
+主密码锁
+========================== -->
+
+
+<div id="lockPage">
+
+
+<div class="box">
+
+
+<h3>
+🔒 安全解锁
+</h3>
+
+
+<label>
+请输入主密码
+</label>
+
+
+<input
+type="password"
+id="masterPassword"
+placeholder="输入主密码">
+
+
+
+<button id="unlock">
+
+进入安全空间
+
+</button>
+
+<button
+    type="button"
+    id="changeMasterPassword">
+
+🔑 修改主密码
+
+</button>
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ==========================
+主程序
+========================== -->
+
+
+<div id="appPage"
+style="display:none;">
+
+
+
+
+
+<!-- 导航 -->
+
+
+<div class="tabs">
+
+
+<button id="generatorTab">
+
+🔑 密码
+
+</button>
+
+
+
+<button id="vaultTab">
+
+🔒 密码库
+
+</button>
+
+
+
+<button id="notesTab">
+
+📝 笔记
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+<!-- ==========================
+密码生成器
+========================== -->
+
+
+<div id="generatorPage">
+
+
+
+<div class="main">
+
+
+
+<div class="left">
+
+
+
+<div class="box">
+
+
+<h3>
+🔑 密码生成
+</h3>
+
+
+<label>
+密码长度
+</label>
+
+
+
+<input
+type="range"
+id="length"
+min="4"
+max="128"
+value="16">
+
+
+
+<input
+type="number"
+id="lenNum"
+value="16">
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="box">
+
+
+<h3>
+字符类型
+</h3>
+
+
+
+<label>
+
+<input 
+id="upper"
+type="checkbox"
+checked>
+
+大写字母
+
+</label>
+
+
+
+<label>
+
+<input 
+id="lower"
+type="checkbox"
+checked>
+
+小写字母
+
+</label>
+
+
+
+<label>
+
+<input 
+id="num"
+type="checkbox"
+checked>
+
+数字
+
+</label>
+
+
+
+<label>
+
+<input 
+id="sym"
+type="checkbox"
+checked>
+
+符号
+
+</label>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="right">
+
+
+
+<div class="box">
+
+
+<h3>
+生成结果
+</h3>
+
+
+
+<input
+id="output"
+readonly>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="box">
+
+
+<h3>
+安全强度
+</h3>
+
+
+<div class="bar">
+
+
+<div id="barFill">
+
+</div>
+
+
+</div>
+
+
+<div id="text">
+
+</div>
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="btns">
+
+
+<button id="gen">
+
+生成
+
+</button>
+
+
+
+<button id="copy">
+
+复制
+
+</button>
+
+
+
+<button id="clear">
+
+清空
+
+</button>
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+<!-- ==========================
+密码库
+========================== -->
+
+
+<div id="vaultPage"
+style="display:none;">
+
+
+
+
+
+<div class="box health-box">
+
+
+<h3>
+🛡 密码健康
+</h3>
+
+
+
+<div id="healthScore">
+
+检测中...
+
+</div>
+
+
+
+<div id="healthResult">
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="box">
+
+
+<h3>
+➕ 添加账号
+</h3>
+
+
+
+<label>
+网站 / 软件
+</label>
+
+
+<input
+id="siteName"
+placeholder="例如 GitHub">
+
+
+
+
+
+<label>
+账号
+</label>
+
+
+<input
+id="username"
+placeholder="账号">
+
+
+
+
+
+<label>
+密码
+</label>
+
+
+<input
+id="vaultPassword"
+type="password">
+
+
+
+
+
+<label>
+分类
+</label>
+
+
+<select id="category">
+
+
+<option>
+工作
+</option>
+
+
+<option>
+💰 金融
+</option>
+
+
+<option>
+💬 社交
+</option>
+
+
+<option>
+🎮游戏
+</option>
+
+
+<option>
+📌其他
+</option>
+
+
+</select>
+
+
+
+
+
+<button id="saveAccount">
+
+保存账号
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="box">
+
+
+<input
+id="search"
+placeholder="搜索账号">
+
+
+</div>
+
+
+
+<div id="vaultList">
+
+</div>
+
+
+
+
+</div>
+
+<!-- ==========================
+笔记模块
+========================== -->
+
+<div id="notesPage"
+style="display:none;">
+
+
+    <!-- ======================
+    笔记本顶部
+    ====================== -->
+
+    <div class="notes-header">
+
+        <div>
+
+            <div class="notes-title">
+                📖 我的笔记
+            </div>
+
+            <div
+                id="notePageInfo"
+                class="note-page-info">
+                第 1 页
+            </div>
+
+        </div>
+
+
+        <div class="notes-header-actions">
+
+            <button
+                type="button"
+                id="prevNotePage">
+                ◀
+            </button>
+
+
+            <button
+                type="button"
+                id="nextNotePage">
+                ▶
+            </button>
+
+
+            <button
+                type="button"
+                id="newNotePage">
+                ＋ 新页面
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ======================
+    笔记信息
+    ====================== -->
+    <!-- ==========================
+     笔记编辑顶部栏
+========================== -->
+
+<div
+    id="noteEditorHeader"
+    class="note-editor-header"
+    style="display:none;">
+
+    <button
+        type="button"
+        id="backToNotes"
+        class="note-back-btn">
+
+        ← 返回笔记
+
+    </button>
+
+
+    <div
+        id="noteEditorTitle"
+        class="note-editor-title">
+
+        新建笔记
+
+    </div>
+
+
+    <div
+        id="noteSaveStatus"
+        class="note-save-status">
+
+        未保存
+
+    </div>
+
+</div>
+
+
+
+    <div class="box">
+
+
+        <label>
+            标题
+        </label>
+
+
+        <input
+            id="noteTitle"
+            placeholder="请输入笔记标题">
+
+
+        <label>
+            分类
+        </label>
+
+
+        <select id="noteCategory">
+
+            <option>
+                💼 工作
+            </option>
+
+            <option>
+                📚 学习
+            </option>
+
+            <option>
+                🏠 私人
+            </option>
+
+            <option>
+                💡 灵感
+            </option>
+
+            <option>
+                📌 重要
+            </option>
+
+            <option>
+                其他
+            </option>
+
+        </select>
+
+
+        <label>
+            标签
+        </label>
+
+
+        <input
+            id="noteTags"
+            placeholder="例如：项目,重要,计划">
+
+
+    </div>
+
+
+
+    <!-- ======================
+    编辑器
+    ====================== -->
+
+    <div class="box note-editor-box">
+
+
+        <div class="editor-topbar">
+
+
+            <div class="editor-tools">
+
+
+
+                <button
+                    type="button"
+                    onclick="undoNote()">
+                     ↶
+                </button>
+
+                <button
+                    type="button"
+                    onclick="redoNote()">
+                    ↷
+                </button>
+
+
+
+                <button
+                    type="button"
+                    onclick="formatText('bold')">
+                    <b>B</b>
+                </button>
+
+
+                <button
+                    type="button"
+                    onclick="formatText('italic')">
+                    <i>I</i>
+                </button>
+
+
+                <button
+                    type="button"
+                    onclick="formatText('underline')">
+                    <u>U</u>
+                </button>
+
+
+                <button
+                    type="button"
+                    onclick="formatText('title')">
+                    H1
+                </button>
+
+
+                <button
+                    type="button"
+                    onclick="insertTodo()">
+                    ☑ 清单
+                </button>
+
+
+                <button
+                    type="button"
+                    onclick="insertLine()">
+                    ─ 分割线
+                </button>
+
+
+                <button
+                    type="button"
+                    onclick="pinCurrentNote()">
+                    📌
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <div
+            id="noteEditor"
+            class="note-editor"
+            contenteditable="true"
+            data-placeholder="开始输入笔记..."
+        ></div>
+
+
+    </div>
+
+
+
+    <!-- ======================
+    页面操作
+    ====================== -->
+
+    <div class="btns">
+
+
+        <button
+            type="button"
+            id="saveNote">
+
+            💾 保存
+
+        </button>
+
+
+        <button
+            type="button"
+            id="clearNote">
+
+            清空
+
+        </button>
+
+
+        <button
+            type="button"
+            id="deleteCurrentNote">
+
+            🗑 删除页面
+
+        </button>
+
+
+    </div>
+
+
+
+    <!-- ======================
+    搜索
+    ====================== -->
+
+    <div class="box">
+
+
+        <h3>
+            🔍 搜索笔记
+        </h3>
+
+
+        <input
+            id="noteSearch"
+            placeholder="搜索标题 / 内容 / 标签">
+
+
+    </div>
+
+    <div class="box note-library">
+
+    <h3>
+        📚 笔记本
+    </h3>
+
+    <div
+        id="noteCategories"
+        class="note-categories">
+
+        <button
+            type="button"
+            class="note-category active"
+            data-category="全部">
+
+            📚 全部
+
+        </button>
+
+        <button
+            type="button"
+            class="note-category"
+            data-category="💼 工作">
+
+            💼 工作
+
+        </button>
+
+        <button
+            type="button"
+            class="note-category"
+            data-category="📚 学习">
+
+            📚 学习
+
+        </button>
+
+        <button
+            type="button"
+            class="note-category"
+            data-category="🏠 私人">
+
+            🏠 私人
+
+        </button>
+
+        <button
+            type="button"
+            class="note-category"
+            data-category="💡 灵感">
+
+            💡 灵感
+
+        </button>
+
+        <button
+            type="button"
+            class="note-category"
+            data-category="📌 重要">
+
+            📌 重要
+
+        </button>
+
+        <button
+            type="button"
+            class="note-category"
+            data-category="其他">
+
+            📁 其他
+
+        </button>
+
+    </div>
+
+</div>
+
+
+
+    <!-- ======================
+    笔记列表
+    ====================== -->
+
+    <div
+        id="notesList"
+        class="notes-list">
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ==========================
+JS
+========================== -->
+
+
+<script src="crypto.js"></script>
+
+<script src="vault.js"></script>
+
+<script src="security.js"></script>
+
+<script src="health.js"></script>
+
+<script src="notes.js"></script>
+
 <script src="app.js"></script>
 
-<!-- ⭐ PWA Service Worker注册 -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js');
-  });
-}
-</script>
+
+
+
+
 
 </body>
+
+
 </html>

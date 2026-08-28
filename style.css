@@ -1,207 +1,1601 @@
-
 /* =========================
-   基础
+   Secure Vault Pro
+   iOS Style PWA
 ========================= */
+
+
+*{
+box-sizing:border-box;
+}
+
+
 body{
-    margin:0;
-    font-family: Arial;
-    background: linear-gradient(120deg,#6a5af9,#8fd3fe);
+
+margin:0;
+
+font-family:
+-apple-system,
+BlinkMacSystemFont,
+"Segoe UI",
+Arial,
+sans-serif;
+
+
+background:
+linear-gradient(
+120deg,
+#6a5af9,
+#8fd3fe
+);
+
+
+min-height:100vh;
+
 }
 
+
 /* =========================
-   居中容器
+容器
 ========================= */
+
 .container{
-    display:flex;
-    justify-content:center;
-    padding:15px;
+
+display:flex;
+
+justify-content:center;
+
+padding:15px;
+
 }
 
+
 /* =========================
-   主卡片（手机优化）
+主卡片
 ========================= */
+
 .card{
-    width:100%;
-    max-width:900px;
-    background:white;
-    border-radius:20px;
-    padding:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+
+width:100%;
+
+max-width:900px;
+
+
+background:white;
+
+
+border-radius:24px;
+
+
+padding:20px;
+
+
+box-shadow:
+
+0 15px 40px
+rgba(0,0,0,.2);
+
+
 }
+
+
 
 /* 标题 */
+
 .title{
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-    margin-bottom:20px;
+
+text-align:center;
+
+font-size:24px;
+
+font-weight:800;
+
+margin-bottom:20px;
+
 }
+
+
 
 /* =========================
-   主体布局
+输入盒子
 ========================= */
-.main{
-    display:flex;
-    gap:20px;
-}
 
-/* 手机自动变纵向 */
-@media(max-width:768px){
-    .main{
-        flex-direction:column;
-    }
-
-    .btns{
-        flex-direction:column;
-    }
-
-    button{
-        width:100%;
-    }
-}
-
-/* =========================
-   盒子
-========================= */
 .box{
-    background:#f7f8ff;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:15px;
+
+
+background:#f5f7ff;
+
+
+padding:15px;
+
+
+border-radius:16px;
+
+
+margin-bottom:15px;
+
+
 }
 
-/* =========================
-   输入
-========================= */
-input[type="text"],
-input[type="number"]{
-    width:100%;
-    padding:10px;
-    margin-top:8px;
-    border-radius:8px;
-    border:1px solid #ddd;
+
+label{
+
+
+display:block;
+
+
+margin-bottom:8px;
+
+
+font-weight:600;
+
+
 }
 
+
+
 /* =========================
-   按钮
+输入
 ========================= */
+
+
+input,
+select{
+
+
+width:100%;
+
+
+padding:12px;
+
+
+margin-top:8px;
+
+
+border-radius:12px;
+
+
+border:
+
+1px solid #ddd;
+
+
+font-size:16px;
+
+
+outline:none;
+
+
+}
+
+
+input:focus,
+select:focus{
+
+
+border-color:#3B82F6;
+
+
+}
+
+
+
+/* =========================
+Tab导航
+========================= */
+
+
+.tabs{
+
+
+display:flex;
+
+
+gap:10px;
+
+
+margin-bottom:20px;
+
+
+}
+
+
+
+.tabs button{
+
+
+background:#eef2ff;
+
+
+color:#333;
+
+
+}
+
+
+
+
+/* =========================
+主体
+========================= */
+
+
+.main{
+
+
+display:flex;
+
+
+gap:20px;
+
+
+}
+
+
+.left,
+.right{
+
+
+flex:1;
+
+
+}
+
+
+
+
+@media(max-width:768px){
+
+
+.main{
+
+
+flex-direction:column;
+
+
+}
+
+
+
 .btns{
-    display:flex;
-    gap:10px;
-    margin-top:20px;
+
+
+flex-direction:column;
+
+
 }
+
 
 button{
-    flex:1;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    font-weight:bold;
-    cursor:pointer;
 
-    /* ⭐新增：立体感 */
-    box-shadow:0 2px 6px rgba(0,0,0,0.15);
-    transition:0.2s;
+
+width:100%;
+
+
 }
 
-/* ⭐所有按钮 hover效果 */
-button:hover{
-    transform:scale(1.05);
-    box-shadow:0 6px 12px rgba(0,0,0,0.2);
+
 }
 
-/* 点击反馈（更像APP） */
-button:active{
-    transform:scale(0.98);
-}
 
-#gen{background:#2d7ff9;color:#fff;}
-#copy{background:#22c55e;color:#fff;}
-#clear{background:#f97316;color:#fff;}
-#save{background:#8b5cf6;color:#fff;}
 
 /* =========================
-   强度条
+按钮
 ========================= */
-.bar{
-    height:10px;
-    background:#ddd;
-    border-radius:10px;
-    overflow:hidden;
-    margin-top:8px;
+
+
+button{
+
+
+flex:1;
+
+
+padding:13px;
+
+
+border:none;
+
+
+border-radius:14px;
+
+
+font-weight:bold;
+
+
+cursor:pointer;
+
+
+font-size:15px;
+
+
+box-shadow:
+
+0 3px 8px
+rgba(0,0,0,.15);
+
+
+
+transition:.2s;
+
+
 }
+
+
+
+button:hover{
+
+
+transform:scale(1.04);
+
+
+}
+
+
+button:active{
+
+
+transform:scale(.97);
+
+
+}
+
+
+
+/* =========================
+颜色按钮
+========================= */
+
+
+#unlock{
+
+
+background:#2563eb;
+
+color:white;
+
+
+}
+
+
+
+#gen{
+
+
+background:#2563eb;
+
+color:white;
+
+
+}
+
+
+
+#copy{
+
+
+background:#22c55e;
+
+color:white;
+
+
+}
+
+
+
+#clear{
+
+
+background:#f97316;
+
+color:white;
+
+
+}
+
+
+
+#saveAccount{
+
+
+background:#8b5cf6;
+
+color:white;
+
+
+}
+
+
+
+/* =========================
+按钮区域
+========================= */
+
+
+.btns{
+
+
+display:flex;
+
+
+gap:10px;
+
+
+margin-top:20px;
+
+
+}
+
+
+
+/* =========================
+强度条
+========================= */
+
+
+.bar{
+
+
+height:12px;
+
+
+background:#ddd;
+
+
+border-radius:20px;
+
+
+overflow:hidden;
+
+
+margin-top:10px;
+
+
+}
+
+
 
 #barFill{
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg,red,orange,green);
+
+
+height:100%;
+
+
+width:0%;
+
+
+background:
+
+linear-gradient(
+90deg,
+red,
+orange,
+green
+);
+
+
+transition:.3s;
+
+
+}
+
+
+
+/* =========================
+密码库列表
+========================= */
+
+
+.vault-item{
+
+
+background:#f1f5ff;
+
+
+padding:15px;
+
+
+border-radius:16px;
+
+
+margin-bottom:12px;
+
+
+box-shadow:
+
+0 4px 10px
+rgba(0,0,0,.08);
+
+
+}
+
+
+
+.vault-title{
+
+
+font-size:18px;
+
+
+font-weight:bold;
+
+
+}
+
+
+
+.vault-info{
+
+
+margin-top:8px;
+
+
+font-family:monospace;
+
+
+color:#555;
+
+
+}
+
+
+
+.vault-actions{
+
+
+display:flex;
+
+
+gap:8px;
+
+
+margin-top:12px;
+
+
+}
+
+
+
+.vault-actions button{
+
+
+font-size:13px;
+
+
+padding:8px;
+
+
+}
+
+
+
+.showBtn{
+
+
+background:#3b82f6;
+
+
+color:white;
+
+
+}
+
+
+
+.deleteBtn{
+
+
+background:#ef4444;
+
+
+color:white;
+
+
+}
+
+
+
+/* =========================
+锁屏
+========================= */
+
+
+#lockPage{
+
+
+animation:
+
+fade .3s;
+
+
+}
+
+
+
+@keyframes fade{
+
+
+from{
+
+opacity:0;
+
+transform:translateY(10px);
+
+}
+
+
+to{
+
+opacity:1;
+
+}
+
+
+}
+
+
+
+/* =========================
+安全隐藏
+========================= */
+
+
+.hidden{
+
+
+display:none!important;
+
+
+}
+
+
+/* =========================
+密码显示保护
+========================= */
+
+
+.password-mask{
+
+font-family:monospace;
+
+letter-spacing:3px;
+
+font-size:18px;
+
+font-weight:bold;
+
+}
+
+
+
+.password-visible{
+
+color:#2563eb;
+
+font-family:monospace;
+
+font-weight:bold;
+
+}
+
+
+
+.secure-tip{
+
+font-size:12px;
+
+color:#777;
+
+margin-top:6px;
+
+}
+
+
+/* =========================
+   笔记清单对齐优化
+========================= */
+
+#noteEditor input[type="checkbox"]{
+
+width:16px;
+
+height:16px;
+
+margin:0 6px 0 0;
+
+vertical-align:-2px;
+
+}
+
+
+#noteEditor{
+
+line-height:1.8;
+
+}
+
+
+#noteEditor br{
+
+line-height:1.8;
+
+}
+
+
+/* =========================
+   笔记分割线
+========================= */
+
+
+.note-divider,
+#noteEditor hr{
+
+
+border:none;
+
+
+border-top:
+
+1px solid #d1d5db;
+
+
+margin:18px 0;
+
+
+width:100%;
+
+
+opacity:.6;
+
+
+}
+
+
+/* =========================
+   GoodNotes Style 笔记
+========================= */
+
+
+/* 笔记顶部 */
+
+.notes-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:15px;
+
+}
+
+
+.notes-title{
+
+    font-size:22px;
+
+    font-weight:800;
+
+}
+
+
+.note-page-info{
+
+    font-size:13px;
+
+    color:#777;
+
+    margin-top:4px;
+
+}
+
+
+.notes-header-actions{
+
+    display:flex;
+
+    gap:6px;
+
+}
+
+
+.notes-header-actions button{
+
+    flex:none;
+
+    width:auto;
+
+    padding:9px 12px;
+
+    background:#eef2ff;
+
+    color:#333;
+
+}
+
+
+/* 编辑器 */
+
+.note-editor-box{
+
+    padding:0;
+
+    overflow:hidden;
+
+}
+
+
+.editor-topbar{
+
+    background:#f5f7ff;
+
+    padding:10px;
+
+    border-bottom:1px solid #e5e7eb;
+
+}
+
+
+.editor-tools{
+
+    display:flex;
+
+    gap:6px;
+
+    flex-wrap:wrap;
+
+}
+
+
+.editor-tools button{
+
+    flex:none;
+
+    width:auto;
+
+    min-width:42px;
+
+    padding:8px 10px;
+
+    background:white;
+
+    color:#333;
+
+    box-shadow:
+
+        0 2px 5px
+        rgba(0,0,0,.08);
+
+}
+
+
+/* 真正的笔记纸 */
+
+.note-editor{
+
+    min-height:420px;
+
+    padding:22px;
+
+    background:white;
+
+    font-size:17px;
+
+    line-height:1.8;
+
+    outline:none;
+
+    color:#222;
+
+    white-space:pre-wrap;
+
+}
+
+
+/* placeholder */
+
+.note-editor:empty::before{
+
+    content:attr(data-placeholder);
+
+    color:#aaa;
+
+    pointer-events:none;
+
+}
+
+
+/* 编辑器焦点 */
+
+.note-editor:focus{
+
+    box-shadow:
+
+        inset 0 0 0 2px
+        rgba(59,130,246,.12);
+
+}
+
+
+/* 清单 */
+
+.note-editor input[type="checkbox"]{
+
+    width:17px;
+
+    height:17px;
+
+    padding:0;
+
+    margin:0 7px 0 0;
+
+    vertical-align:middle;
+
+    position:relative;
+
+    top:-1px;
+
+    cursor:pointer;
+
+}
+
+
+/* 清单所在行 */
+
+.note-check-line{
+
+    display:flex;
+
+    align-items:center;
+
+    min-height:31px;
+
+}
+
+
+.note-check-line input{
+
+    flex:none;
+
+}
+
+
+/* 分割线 */
+
+.note-divider{
+
+    border:0;
+
+    border-top:
+
+        1px solid #cfd3d8;
+
+    width:100%;
+
+    margin:18px 0;
+
+    opacity:.65;
+
+}
+
+
+/* 笔记列表 */
+
+.notes-list{
+
+    margin-top:15px;
+
+}
+
+
+.note-card{
+
+    background:#f8faff;
+
+    border-radius:18px;
+
+    padding:16px;
+
+    margin-bottom:12px;
+
+    box-shadow:
+
+        0 4px 12px
+        rgba(0,0,0,.08);
+
+}
+
+
+.note-card h3{
+
+    margin:
+
+        0 0 10px 0;
+
+    font-size:18px;
+
+}
+
+
+.note-content{
+
+    background:white;
+
+    border-radius:12px;
+
+    padding:12px;
+
+    line-height:1.7;
+
+    word-break:break-word;
+
+}
+
+
+.note-info{
+
+    margin-top:10px;
+
+    color:#666;
+
+    font-size:13px;
+
+}
+
+
+.note-tags{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:6px;
+
+    margin-top:8px;
+
+}
+
+
+.note-tags .tag{
+
+    background:#e0e7ff;
+
+    color:#3730a3;
+
+    padding:4px 8px;
+
+    border-radius:20px;
+
+    font-size:12px;
+
+}
+
+
+.note-time{
+
+    margin-top:8px;
+
+    color:#888;
+
+    font-size:12px;
+
+}
+
+
+.note-buttons{
+
+    display:flex;
+
+    gap:8px;
+
+    margin-top:12px;
+
+}
+
+
+.note-buttons button{
+
+    flex:none;
+
+    width:auto;
+
+    padding:8px 12px;
+
+    font-size:13px;
+
+}
+
+
+.note-empty{
+
+    text-align:center;
+
+    padding:35px 15px;
+
+    color:#888;
+
+}
+
+
+/* 手机 */
+
+@media(max-width:768px){
+
+    .notes-header{
+
+        align-items:flex-start;
+
+        flex-direction:column;
+
+    }
+
+
+    .notes-header-actions{
+
+        width:100%;
+
+    }
+
+
+    .notes-header-actions button{
+
+        flex:1;
+
+    }
+
+
+    .note-editor{
+
+        min-height:380px;
+
+        padding:17px;
+
+        font-size:16px;
+
+    }
+
+
+    .editor-tools button{
+
+        min-width:38px;
+
+        padding:7px 9px;
+
+    }
+
+}
+
+
+/* =========================
+   笔记清单真正对齐
+========================= */
+
+#noteEditor .note-check-line{
+
+    display:flex;
+
+    align-items:center;
+
+    width:100%;
+
+    min-height:32px;
+
+    line-height:1.8;
+
+}
+
+
+#noteEditor .note-check-line
+.note-checkbox{
+
+    flex:0 0 auto;
+
+    width:17px;
+
+    height:17px;
+
+    margin:0 8px 0 0;
+
+    padding:0;
+
+    vertical-align:middle;
+
+}
+
+
+#noteEditor .note-check-line
+input[type="checkbox"]{
+
+    appearance:auto;
+
+    -webkit-appearance:auto;
+
+}
+
+
+/* 分割线 */
+
+#noteEditor .note-divider{
+
+    display:block;
+
+    width:100%;
+
+    height:0;
+
+    border:0;
+
+    border-top:
+        1px solid #c7cbd1;
+
+    margin:18px 0;
+
+    opacity:.55;
+
+}
+
+
+/* 编辑器中的普通行 */
+
+#noteEditor > div{
+
+    min-height:30px;
+
+}
+
+
+/* 手机 */
+
+@media(max-width:768px){
+
+    #noteEditor .note-check-line{
+
+        min-height:34px;
+
+    }
+
+
+    #noteEditor .note-check-line
+    .note-checkbox{
+
+        width:18px;
+
+        height:18px;
+
+        margin-right:8px;
+
+    }
+
+}
+
+
+/* =========================
+   笔记卡片
+========================= */
+
+.note-card{
+
+    background:#ffffff;
+
+    border-radius:18px;
+
+    padding:16px;
+
+    margin-bottom:14px;
+
+    box-shadow:
+        0 4px 14px
+        rgba(0,0,0,.08);
+
+}
+
+
+.note-pinned{
+
+    border-left:
+        4px solid #f59e0b;
+
+}
+
+
+.note-card-header{
+
+    display:flex;
+
+    justify-content:
+        space-between;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+
+.note-card-title{
+
+    font-size:18px;
+
+    font-weight:700;
+
+}
+
+
+.note-card-preview{
+
+    margin-top:10px;
+
+    color:#555;
+
+    line-height:1.6;
+
+    word-break:break-word;
+
+}
+
+
+.note-card-meta{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:12px;
+
+    margin-top:12px;
+
+    font-size:12px;
+
+    color:#888;
+
+}
+
+
+.note-tags{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:6px;
+
+    margin-top:10px;
+
+}
+
+
+.note-tag{
+
+    display:inline-block;
+
+    padding:
+        4px 9px;
+
+    background:#eef2ff;
+
+    color:#4f46e5;
+
+    border-radius:10px;
+
+    font-size:12px;
+
+}
+
+
+.note-buttons{
+
+    display:flex;
+
+    gap:7px;
+
+    margin-top:14px;
+
+}
+
+
+.note-buttons button{
+
+    padding:8px 10px;
+
+    font-size:12px;
+
+}
+
+
+.note-empty{
+
+    text-align:center;
+
+    padding:40px 20px;
+
+    color:#888;
+
+    background:#f5f7ff;
+
+    border-radius:16px;
+
 }
 
 /* =========================
-   历史
+   笔记本分类
 ========================= */
-.history{
-    margin-top:20px;
-}
 
-.history-title{
-    font-weight:bold;
-    margin-bottom:10px;
-}
+.note-categories{
 
-/* 每条历史 */
-.history-item{
     display:flex;
-    justify-content:space-between;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+}
+
+
+.note-category{
+
+    flex:
+        0 0 auto;
+
+    width:auto;
+
+    padding:
+        9px 13px;
+
+    background:#eef2ff;
+
+    color:#374151;
+
+    border-radius:12px;
+
+    box-shadow:none;
+
+    font-size:13px;
+
+}
+
+
+.note-category:hover{
+
+    transform:none;
+
+}
+
+
+.note-category.active{
+
+    background:#2563eb;
+
+    color:white;
+
+}
+
+
+@media(max-width:768px){
+
+    .note-categories{
+
+        display:grid;
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+    }
+
+
+    .note-category{
+
+        width:100%;
+
+    }
+
+}
+
+
+/* =========================
+   笔记独立编辑顶部栏
+========================= */
+
+.note-editor-header{
+
+    display:flex;
+
     align-items:center;
-    background:#f1f5ff;
-    padding:10px;
-    border-radius:10px;
+
+    gap:12px;
+
+    padding:
+        10px 4px 16px;
+
     margin-bottom:8px;
+
+    border-bottom:
+        1px solid #e5e7eb;
+
 }
 
-/* 密码文本 */
-.history-item span{
+
+.note-back-btn{
+
+    flex:
+        0 0 auto;
+
+    width:auto;
+
+    padding:
+        9px 12px;
+
+    background:#eef2ff;
+
+    color:#2563eb;
+
+    box-shadow:none;
+
+}
+
+
+.note-editor-title{
+
     flex:1;
-    font-family: monospace;
+
+    font-size:18px;
+
+    font-weight:700;
+
     overflow:hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+
 }
 
-/* 按钮组 */
-.history-actions{
-    display:flex;
-    gap:6px;
-}
 
-/* 历史按钮 */
-.history-actions button{
-    width:60px;
-    height:28px;
+.note-save-status{
+
+    flex:
+        0 0 auto;
+
     font-size:12px;
-    border:none;
-    border-radius:6px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
 
-/*多做的样式*/
-.history-actions button{
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    transition:0.2s;
-}
+    color:#6b7280;
 
-.history-actions button:hover{
-    transform:scale(1.05);
 }
 
 
+.new-note-btn{
+
+    width:100%;
+
+    margin-bottom:12px;
+
+    background:#2563eb;
+
+    color:white;
+
+}
 
 
+@media(max-width:768px){
+
+    .note-editor-header{
+
+        gap:8px;
+
+    }
 
 
-/* 复制 / 删除 */
-.copyBtn{background:#3b82f6;color:#fff;}
-.delBtn{background:#ef4444;color:#fff;}
+    .note-editor-title{
+
+        font-size:16px;
+
+    }
+
+
+    .note-save-status{
+
+        font-size:11px;
+
+    }
+
+}
