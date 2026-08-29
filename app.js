@@ -3098,18 +3098,16 @@ if($("saveNote")){
              */
             if(newNote){
 
-                editingNoteId =
-                    newNote.id;
+    currentNotePageIndex =
+        notes.findIndex(
+            note =>
+                note.id ===
+                newNote.id
+        );
 
+    editingNoteId = null;
 
-                currentNotePageIndex =
-                    notes.findIndex(
-                        note =>
-                            note.id ===
-                            newNote.id
-                    );
-
-            }
+}
 
 
             if($("noteSaveStatus")){
@@ -4941,4 +4939,4 @@ async()=>{
 
     updateNotePageInfo();
 
-}; 
+};
