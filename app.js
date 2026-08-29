@@ -1254,8 +1254,31 @@ async function renderNotes(){
 
 
     let notes =
-        NotesManager.getNotes()
-        || [];
+    NotesManager.getNotes()
+    || [];
+
+
+/*
+ * 防止同一条历史笔记重复显示
+ */
+const uniqueNotes = [];
+const noteIds = new Set();
+
+notes.forEach(note => {
+
+    if(!note)
+        return;
+
+    if(noteIds.has(note.id))
+        return;
+
+    noteIds.add(note.id);
+
+    uniqueNotes.push(note);
+
+});
+
+notes = uniqueNotes;
 
 
     // ============================
@@ -1824,6 +1847,33 @@ async function getNotePageList(){
     let notes =
         NotesManager.getNotes()
         || [];
+
+
+    /*
+     * ============================
+     * 防止历史笔记重复
+     * ============================
+     *
+     * 同一个 ID 只保留一条。
+     */
+    const uniqueNotes = [];
+    const noteIds = new Set();
+
+    notes.forEach(note => {
+
+        if(!note)
+            return;
+
+        if(noteIds.has(note.id))
+            return;
+
+        noteIds.add(note.id);
+
+        uniqueNotes.push(note);
+
+    });
+
+    notes = uniqueNotes;
 
 
     notes =
@@ -4891,4 +4941,4 @@ async()=>{
 
     updateNotePageInfo();
 
-};
+}; 
