@@ -2,7 +2,7 @@
 // Secure Vault Pro v3.2
 // Main Application
 // Stable Notes Edition
-// Part 1
+// app.js
 // =====================================
 
 
@@ -14,6 +14,21 @@ let vaultData = [];
 // 当前编辑笔记ID
 let editingNoteId = null;
 
+
+// 当前笔记页面位置
+let currentNotePageIndex = -1;
+
+
+// 当前笔记分类
+let currentNoteCategory = "全部";
+
+
+// 笔记编辑模式
+let noteEditMode = false;
+
+
+// 自动保存计时器
+let noteAutoSaveTimer = null;
 
 
 const $ = id =>
@@ -39,7 +54,6 @@ const unlockBtn =
 $("unlock");
 
 
-
 const generatorTab =
 $("generatorTab");
 
@@ -50,7 +64,6 @@ $("vaultTab");
 
 const notesTab =
 $("notesTab");
-
 
 
 const generatorPage =
@@ -111,47 +124,30 @@ $("text");
 
 
 
-
-
-
 if(length){
 
+    length.oninput=()=>{
 
-length.oninput=()=>{
+        lenNum.value =
+        length.value;
 
-
-lenNum.value =
-length.value;
-
-
-};
-
+    };
 
 }
-
-
-
 
 
 
 
 if(lenNum){
 
+    lenNum.oninput=()=>{
 
-lenNum.oninput=()=>{
+        length.value =
+        lenNum.value;
 
-
-length.value =
-lenNum.value;
-
-
-};
-
+    };
 
 }
-
-
-
 
 
 
@@ -174,226 +170,194 @@ const S =
 
 
 
-
-
-
 function random(max){
 
-
-return Math.floor(
-Math.random()*max
-);
-
+    return Math.floor(
+        Math.random()*max
+    );
 
 }
-
-
-
-
-
 
 
 
 
 function getPool(){
 
-
-let pool="";
-
+    let pool="";
 
 
-if(upper && upper.checked)
+    if(
+        upper &&
+        upper.checked
+    )
 
-pool+=U;
-
-
-
-if(lower && lower.checked)
-
-pool+=L;
+        pool+=U;
 
 
+    if(
+        lower &&
+        lower.checked
+    )
 
-if(num && num.checked)
-
-pool+=N;
-
-
-
-if(sym && sym.checked)
-
-pool+=S;
+        pool+=L;
 
 
+    if(
+        num &&
+        num.checked
+    )
 
-return pool;
+        pool+=N;
 
+
+    if(
+        sym &&
+        sym.checked
+    )
+
+        pool+=S;
+
+
+    return pool;
 
 }
-
-
-
-
-
 
 
 
 
 function generatePassword(len){
 
-
-let pool =
-getPool();
-
+    let pool =
+        getPool();
 
 
-if(!pool)
+    if(!pool)
 
-return "";
-
-
-
-let result=[];
+        return "";
 
 
-
-if(upper && upper.checked)
-
-result.push(
-U[random(U.length)]
-);
+    let result=[];
 
 
+    if(
+        upper &&
+        upper.checked
+    )
 
-if(lower && lower.checked)
-
-result.push(
-L[random(L.length)]
-);
-
-
-
-if(num && num.checked)
-
-result.push(
-N[random(N.length)]
-);
+        result.push(
+            U[random(U.length)]
+        );
 
 
+    if(
+        lower &&
+        lower.checked
+    )
 
-if(sym && sym.checked)
-
-result.push(
-S[random(S.length)]
-);
-
-
-
-
+        result.push(
+            L[random(L.length)]
+        );
 
 
-while(result.length < len){
+    if(
+        num &&
+        num.checked
+    )
+
+        result.push(
+            N[random(N.length)]
+        );
 
 
-result.push(
-pool[random(pool.length)]
-);
+    if(
+        sym &&
+        sym.checked
+    )
 
+        result.push(
+            S[random(S.length)]
+        );
+
+
+
+
+    while(
+        result.length < len
+    ){
+
+        result.push(
+            pool[random(pool.length)]
+        );
+
+    }
+
+
+
+
+    return result
+        .sort(
+            ()=>Math.random()-0.5
+        )
+        .join("");
 
 }
-
-
-
-
-return result
-.sort(
-()=>Math.random()-0.5
-)
-.join("");
-
-}
-
-
-
-
-
-
-
-
-
 
 
 
 
 function checkStrength(password){
 
-
-let score=0;
-
+    let score=0;
 
 
-if(password.length>=8)
+    if(password.length>=8)
 
-score+=20;
-
-
-
-if(password.length>=12)
-
-score+=20;
+        score+=20;
 
 
+    if(password.length>=12)
 
-if(/[A-Z]/.test(password))
-
-score+=20;
-
+        score+=20;
 
 
-if(/[0-9]/.test(password))
+    if(/[A-Z]/.test(password))
 
-score+=20;
+        score+=20;
 
 
+    if(/[0-9]/.test(password))
 
-if(/[^A-Za-z0-9]/.test(password))
+        score+=20;
 
-score+=20;
+
+    if(/[^A-Za-z0-9]/.test(password))
+
+        score+=20;
 
 
 
 
+    if(bar)
+
+        bar.style.width =
+            score+"%";
 
 
+    if(text)
 
-if(bar)
+        text.innerText =
 
-bar.style.width =
-score+"%";
-
-
-
-if(text)
-
-text.innerText =
-
-score<40
-?
-"弱"
-:
-score<80
-?
-"中"
-:
-"强";
-
+            score<40
+            ?
+            "弱"
+            :
+            score<80
+            ?
+            "中"
+            :
+            "强";
 
 }
-
-
-
-
-
 
 
 
@@ -405,31 +369,22 @@ score<80
 
 if($("gen")){
 
+    $("gen").onclick=()=>{
 
-$("gen").onclick=()=>{
-
-
-let p =
-generatePassword(
-Number(length.value)
-);
+        let p =
+            generatePassword(
+                Number(length.value)
+            );
 
 
-
-output.value=p;
-
+        output.value=p;
 
 
-checkStrength(p);
+        checkStrength(p);
 
-
-
-};
-
+    };
 
 }
-
-
 
 
 
@@ -441,69 +396,58 @@ checkStrength(p);
 
 if($("copy")){
 
+    $("copy").onclick=()=>{
 
-$("copy").onclick=()=>{
+        if(!output.value)
 
-
-if(!output.value)
-
-return;
+            return;
 
 
-
-navigator.clipboard.writeText(
-output.value
-);
-
+        navigator.clipboard.writeText(
+            output.value
+        );
 
 
-setTimeout(()=>{
+        setTimeout(()=>{
 
+            navigator.clipboard.writeText("");
 
-navigator.clipboard.writeText("");
+        },15000);
 
-},15000);
-
-
-
-};
-
+    };
 
 }
 
 
 
 
-
 // ================================
-// 清空
+// 清空密码
 // ================================
 
 
 if($("clear")){
 
+    $("clear").onclick=()=>{
 
-$("clear").onclick=()=>{
-
-
-output.value="";
+        output.value="";
 
 
-if(bar)
+        if(bar)
 
-bar.style.width="0%";
-
-
-
-if(text)
-
-text.innerText="";
+            bar.style.width="0%";
 
 
-};
+        if(text)
 
+            text.innerText="";
+
+    };
 
 }
+
+
+
 
 // ================================
 // 主密码解锁
@@ -513,170 +457,121 @@ text.innerText="";
 unlockBtn.onclick =
 async()=>{
 
+    let pass =
+        $("masterPassword").value;
 
-let pass =
-$("masterPassword").value;
 
+    if(!pass){
 
+        alert(
+            "请输入主密码"
+        );
 
-if(!pass){
+        return;
 
+    }
 
-alert(
-"请输入主密码"
-);
 
+    masterPassword =
+        pass;
 
-return;
 
+    NotesManager.setPassword(
+        pass
+    );
 
-}
 
+    let encrypted =
+        await VaultDB.loadVault();
 
 
-masterPassword =
-pass;
+    if(encrypted){
 
+        try{
 
-NotesManager.setPassword(pass);
+            vaultData =
+                await CryptoManager.decryptData(
+                    encrypted,
+                    masterPassword
+                );
 
+        }
 
+        catch(e){
 
+            alert(
+                "主密码错误"
+            );
 
-let encrypted =
-await VaultDB.loadVault();
+            masterPassword="";
 
+            return;
 
+        }
 
+    }
 
+    else{
 
+        vaultData=[];
 
-if(encrypted){
+        await saveVault();
 
+    }
 
 
-try{
+    lockPage.style.display =
+        "none";
 
 
-vaultData =
-await CryptoManager.decryptData(
+    appPage.style.display =
+        "block";
 
-encrypted,
 
-masterPassword
+    if(window.SecurityManager){
 
-);
+        SecurityManager.resetTimer();
 
+    }
 
 
-}
+    if(window.NotesManager){
 
-catch(e){
+        await NotesManager.loadNotes();
 
+    }
 
-alert(
-"主密码错误"
-);
 
+    renderVault();
 
-masterPassword="";
-
-
-return;
-
-
-}
-
-
-
-}
-
-else{
-
-
-vaultData=[];
-
-
-await saveVault();
-
-
-}
-
-
-
-
-
-
-lockPage.style.display=
-"none";
-
-
-appPage.style.display=
-"block";
-
-
-
-
-
-
-if(window.SecurityManager){
-
-
-SecurityManager.resetTimer();
-
-
-}
-
-
-
-
-
-
-// ⭐关键：恢复你的笔记加载
-
-if(window.NotesManager){
-
-
-await NotesManager.loadNotes();
-
-
-}
-
-
-
-
-renderVault();
-
-
-updateHealth();
-
-
+    updateHealth();
 
 };
 
 
 
-// ================================
-// 保存密码库
-// ================================
+
 // ================================
 // 修改主密码
 // ================================
+
 
 if($("changeMasterPassword")){
 
     $("changeMasterPassword").onclick =
     async()=>{
 
-        // 1. 输入当前主密码
         const oldPassword =
-            prompt("请输入当前主密码");
+            prompt(
+                "请输入当前主密码"
+            );
+
 
         if(!oldPassword)
+
             return;
 
 
-        // 2. 检查当前主密码
         try{
 
             const encrypted =
@@ -693,29 +588,35 @@ if($("changeMasterPassword")){
             }
 
         }
+
         catch(error){
 
-            alert("当前主密码错误");
+            alert(
+                "当前主密码错误"
+            );
 
             return;
 
         }
 
 
-        // 3. 输入新密码
         const newPassword =
-            prompt("请输入新的主密码");
+            prompt(
+                "请输入新的主密码"
+            );
+
 
         if(!newPassword){
 
-            alert("新主密码不能为空");
+            alert(
+                "新主密码不能为空"
+            );
 
             return;
 
         }
 
 
-        // 4. 检查新密码长度
         if(newPassword.length < 6){
 
             alert(
@@ -727,14 +628,16 @@ if($("changeMasterPassword")){
         }
 
 
-        // 5. 再次输入新密码
         const confirmPassword =
             prompt(
                 "请再次输入新的主密码"
             );
 
 
-        if(newPassword !== confirmPassword){
+        if(
+            newPassword !==
+            confirmPassword
+        ){
 
             alert(
                 "两次输入的新主密码不一致"
@@ -745,7 +648,6 @@ if($("changeMasterPassword")){
         }
 
 
-        // 6. 用新密码重新加密
         try{
 
             const encryptedVault =
@@ -755,18 +657,15 @@ if($("changeMasterPassword")){
                 );
 
 
-            // 7. 保存新的密码库
             await VaultDB.saveVault(
                 encryptedVault
             );
 
 
-            // 8. 更新当前主密码
             masterPassword =
                 newPassword;
 
 
-            // 9. 更新笔记密码
             if(window.NotesManager){
 
                 NotesManager.setPassword(
@@ -781,12 +680,14 @@ if($("changeMasterPassword")){
             );
 
         }
+
         catch(error){
 
             console.error(
                 "修改主密码失败:",
                 error
             );
+
 
             alert(
                 "修改主密码失败，请重试"
@@ -800,41 +701,31 @@ if($("changeMasterPassword")){
 
 
 
+
+// ================================
+// 保存密码库
+// ================================
+
+
 async function saveVault(){
 
+    if(!masterPassword)
 
-if(!masterPassword)
-
-return;
-
+        return;
 
 
-let encrypted =
-
-await CryptoManager.encryptData(
-
-vaultData,
-
-masterPassword
-
-);
+    let encrypted =
+        await CryptoManager.encryptData(
+            vaultData,
+            masterPassword
+        );
 
 
-
-await VaultDB.saveVault(
-
-encrypted
-
-);
-
-
+    await VaultDB.saveVault(
+        encrypted
+    );
 
 }
-
-
-
-
-
 
 
 
@@ -846,120 +737,99 @@ encrypted
 
 if(generatorTab){
 
+    generatorTab.onclick=()=>{
 
-generatorTab.onclick=()=>{
-
-
-generatorPage.style.display =
-"block";
+        generatorPage.style.display =
+            "block";
 
 
-vaultPage.style.display =
-"none";
+        vaultPage.style.display =
+            "none";
 
 
-notesPage.style.display =
-"none";
+        notesPage.style.display =
+            "none";
 
-
-
-};
-
-
+    };
 
 }
-
-
-
-
 
 
 
 
 if(vaultTab){
 
+    vaultTab.onclick=()=>{
 
-vaultTab.onclick=()=>{
-
-
-generatorPage.style.display =
-"none";
+        generatorPage.style.display =
+            "none";
 
 
-vaultPage.style.display =
-"block";
+        vaultPage.style.display =
+            "block";
 
 
-notesPage.style.display =
-"none";
+        notesPage.style.display =
+            "none";
 
 
+        renderVault();
 
-renderVault();
+        updateHealth();
 
-
-updateHealth();
-
-
-
-};
-
-
+    };
 
 }
-
-
-
 
 
 
 
 if(notesTab){
 
+    notesTab.onclick=
+    async()=>{
 
-notesTab.onclick=
-async()=>{
-
-
-generatorPage.style.display =
-"none";
+        generatorPage.style.display =
+            "none";
 
 
-vaultPage.style.display =
-"none";
+        vaultPage.style.display =
+            "none";
 
 
-notesPage.style.display =
-"block";
+        notesPage.style.display =
+            "block";
 
 
+        if(window.NotesManager){
+
+            await NotesManager.loadNotes();
+
+        }
 
 
+        /*
+         * 回到笔记模块时，
+         * 如果当前正在编辑某条笔记，
+         * 保持当前页面。
+         */
+        if(editingNoteId){
+
+            await setCurrentNotePageById(
+                editingNoteId
+            );
+
+        }
 
 
-// 每次打开重新读取
+        renderNotes();
 
-if(window.NotesManager){
-
-
-await NotesManager.loadNotes();
-
-
-}
-
-
-
-
-
-renderNotes();
-
-
-
-};
-
-
+    };
 
 }
+
+
+
 
 // ================================
 // 添加账号
@@ -968,138 +838,67 @@ renderNotes();
 
 if($("saveAccount")){
 
+    $("saveAccount")
+    .onclick=
+    async()=>{
 
-$("saveAccount")
-.onclick=
-async()=>{
+        let item={
 
+            id:
+                Date.now(),
 
+            site:
+                $("siteName")
+                .value
+                .trim(),
 
-let item={
+            username:
+                $("username")
+                .value
+                .trim(),
 
+            password:
+                $("vaultPassword")
+                .value,
 
+            category:
+                $("category")
+                .value
 
-id:
-Date.now(),
-
-
-
-
-site:
-
-$("siteName")
-.value
-.trim(),
-
-
-
-
-
-username:
-
-$("username")
-.value
-.trim(),
+        };
 
 
+        if(!item.site){
+
+            alert(
+                "请输入网站名称"
+            );
+
+            return;
+
+        }
 
 
-
-password:
-
-$("vaultPassword")
-.value,
+        vaultData.unshift(item);
 
 
+        await saveVault();
 
 
+        $("siteName").value="";
 
-category:
+        $("username").value="";
 
-$("category")
-.value
-
-
+        $("vaultPassword").value="";
 
 
-};
+        renderVault();
 
+        updateHealth();
 
-
-
-
-
-
-
-if(!item.site){
-
-
-alert(
-"请输入网站名称"
-);
-
-
-return;
-
+    };
 
 }
-
-
-
-
-
-
-
-vaultData.unshift(item);
-
-
-
-
-
-await saveVault();
-
-
-
-
-
-
-
-
-$("siteName").value="";
-
-
-$("username").value="";
-
-
-$("vaultPassword").value="";
-
-
-
-
-
-
-renderVault();
-
-
-updateHealth();
-
-
-
-
-
-};
-
-
-
-}
-
-
-
-
-
-
-
-
 
 
 
@@ -1111,92 +910,57 @@ updateHealth();
 
 function renderVault(){
 
-
-let list =
-$("vaultList");
-
+    let list =
+        $("vaultList");
 
 
-if(!list)
+    if(!list)
 
-return;
-
-
-
-list.innerHTML="";
+        return;
 
 
-
-let keyword =
-($("search")?.value || "")
-.toLowerCase();
+    list.innerHTML="";
 
 
+    let keyword =
+        (
+            $("search")?.value
+            || ""
+        )
+        .toLowerCase();
 
 
+    vaultData
+
+        .filter(item=>{
+
+            return(
+
+                item.site
+                    .toLowerCase()
+                    .includes(keyword)
+
+                ||
+
+                item.category
+                    .toLowerCase()
+                    .includes(keyword)
+
+            );
+
+        })
+
+        .forEach(item=>{
+
+            let div =
+                document.createElement("div");
 
 
+            div.className =
+                "vault-item";
 
 
-vaultData
-
-.filter(item=>{
-
-
-return(
-
-item.site
-
-.toLowerCase()
-
-.includes(keyword)
-
-
-
-
-
-||
-
-
-
-
-
-item.category
-
-.toLowerCase()
-
-.includes(keyword)
-
-
-
-);
-
-
-
-})
-
-
-
-
-
-.forEach(item=>{
-
-
-
-let div =
-document.createElement("div");
-
-
-
-div.className =
-"vault-item";
-
-
-
-
-
-
-div.innerHTML=
+            div.innerHTML=
 
 `
 
@@ -1205,7 +969,6 @@ div.innerHTML=
 🔐 ${item.site}
 
 </div>
-
 
 
 <div>
@@ -1217,7 +980,6 @@ ${item.username}
 </div>
 
 
-
 <div>
 
 📂分类：
@@ -1225,8 +987,6 @@ ${item.username}
 ${item.category}
 
 </div>
-
-
 
 
 <div>
@@ -1243,12 +1003,7 @@ class="password-mask">
 
 </span>
 
-
 </div>
-
-
-
-
 
 
 <div class="vault-actions">
@@ -1261,15 +1016,11 @@ class="password-mask">
 </button>
 
 
-
-
 <button class="copyBtn">
 
 📋 复制
 
 </button>
-
-
 
 
 <button class="deleteBtn">
@@ -1281,206 +1032,105 @@ class="password-mask">
 
 </div>
 
-
 `;
 
 
+            div.querySelector(
+                ".showBtn"
+            )
+            .onclick=()=>{
 
+                let span =
+                    $("pwd-"+item.id);
 
 
+                span.innerText =
+                    item.password;
 
 
+                setTimeout(()=>{
 
-// 显示密码
+                    span.innerText =
+                        "••••••••";
 
+                },3000);
 
-div.querySelector(".showBtn")
+            };
 
-.onclick=()=>{
 
 
-let span =
 
-$("pwd-"+item.id);
+            div.querySelector(
+                ".copyBtn"
+            )
+            .onclick=()=>{
 
+                navigator.clipboard.writeText(
+                    item.password
+                );
 
 
-span.innerText =
+                setTimeout(()=>{
 
-item.password;
+                    navigator.clipboard.writeText("");
 
+                },15000);
 
+            };
 
 
 
 
+            div.querySelector(
+                ".deleteBtn"
+            )
+            .onclick=
+            async()=>{
 
-setTimeout(()=>{
+                if(
+                    confirm(
+                        "确定删除这个账号？"
+                    )
+                ){
 
+                    vaultData =
+                        vaultData.filter(
+                            x =>
+                                x.id !==
+                                item.id
+                        );
 
-span.innerText=
 
-"••••••••";
+                    await saveVault();
 
 
+                    renderVault();
 
-},3000);
+                    updateHealth();
 
+                }
 
+            };
 
-};
 
+            list.appendChild(div);
 
-
-
-
-
-
-
-
-
-// 复制密码
-
-
-div.querySelector(".copyBtn")
-
-.onclick=()=>{
-
-
-navigator.clipboard.writeText(
-
-item.password
-
-);
-
-
-
-
-
-
-setTimeout(()=>{
-
-
-navigator.clipboard.writeText("");
-
-
-
-},15000);
-
-
-
-};
-
-
-
-
-
-
-
-
-
-// 删除
-
-
-div.querySelector(".deleteBtn")
-
-.onclick=
-
-async()=>{
-
-
-if(confirm(
-
-"确定删除这个账号？"
-
-)){
-
-
-
-vaultData =
-
-vaultData.filter(
-
-x=>x.id!==item.id
-
-);
-
-
-
-
-
-
-await saveVault();
-
-
-
-
-
-renderVault();
-
-
-updateHealth();
-
-
+        });
 
 }
-
-
-
-};
-
-
-
-
-
-
-
-
-
-list.appendChild(div);
-
-
-
-
-
-});
-
-
-
-}
-
-
-
-
-
-
-
-
-
 
 
 
 
 if($("search")){
 
+    $("search").oninput=()=>{
 
-$("search").oninput=()=>{
+        renderVault();
 
-
-renderVault();
-
-
-
-};
-
-
+    };
 
 }
-
-
-
-
-
 
 
 
@@ -1492,50 +1142,28 @@ renderVault();
 
 function updateHealth(){
 
+    if(!window.PasswordHealth)
 
-if(!window.PasswordHealth)
-
-return;
-
+        return;
 
 
+    let result =
+        PasswordHealth.analyze(
+            vaultData
+        );
 
 
-let result =
-
-PasswordHealth.analyze(
-
-vaultData
-
-);
+    let score =
+        $("healthScore");
 
 
+    let detail =
+        $("healthResult");
 
 
+    if(score){
 
-
-
-let score =
-
-$("healthScore");
-
-
-
-let detail =
-
-$("healthResult");
-
-
-
-
-
-
-
-if(score){
-
-
-
-score.innerHTML =
+        score.innerHTML =
 
 `
 
@@ -1551,109 +1179,74 @@ ${result.score}
 
 `;
 
-
-
-}
-
+    }
 
 
 
 
+    if(detail){
+
+        let msg="";
 
 
+        if(result.weak.length){
 
-if(detail){
+            msg +=
+                "⚠ 弱密码："+
 
+                result.weak.length+
 
+                "个<br>";
 
-let msg="";
-
-
-
-
-
-
-
-if(result.weak.length){
+        }
 
 
+        if(result.duplicates.length){
 
-msg +=
+            msg +=
+                "⚠ 重复密码："+
 
-"⚠ 弱密码："+
+                result.duplicates.length+
 
-result.weak.length+
+                "组<br>";
 
-"个<br>";
-
-
-
-}
+        }
 
 
+        if(!msg){
+
+            msg =
+                "✅ 未发现明显风险";
+
+        }
 
 
+        detail.innerHTML =
+            msg;
 
-
-
-if(result.duplicates.length){
-
-
-
-msg +=
-
-"⚠ 重复密码："+
-
-result.duplicates.length+
-
-"组<br>";
-
-
+    }
 
 }
 
 
 
 
-
-
-
-if(!msg){
-
-
-msg=
-
-"✅ 未发现明显风险";
-
-
-}
-
-
-
-detail.innerHTML = msg;
-
-
-
-}
-
-
-
-}
-
-// ================================
+// ============================================================
 // 笔记列表
-// ================================
+// ============================================================
 
-
-// ================================
-// 笔记列表
-// ================================
 
 async function renderNotes(){
 
-    const list = $("notesList");
+    const list =
+        $("notesList");
 
-    if(!list || !window.NotesManager)
+
+    if(
+        !list ||
+        !window.NotesManager
+    )
+
         return;
 
 
@@ -1669,19 +1262,14 @@ async function renderNotes(){
     // 搜索
     // ============================
 
+
     const keyword =
         (
             $("noteSearch")?.value
             || ""
         )
-
-        
-        
-
         .trim()
         .toLowerCase();
-
-        
 
 
     if(keyword){
@@ -1693,14 +1281,17 @@ async function renderNotes(){
                     (note.title || "")
                     .toLowerCase();
 
+
                 const content =
                     (note.content || "")
                     .toLowerCase();
+
 
                 const tags =
                     (note.tags || [])
                     .join(" ")
                     .toLowerCase();
+
 
                 const category =
                     (note.category || "")
@@ -1708,41 +1299,59 @@ async function renderNotes(){
 
 
                 return(
-                    title.includes(keyword) ||
-                    content.includes(keyword) ||
-                    tags.includes(keyword) ||
+
+                    title.includes(keyword)
+
+                    ||
+
+                    content.includes(keyword)
+
+                    ||
+
+                    tags.includes(keyword)
+
+                    ||
+
                     category.includes(keyword)
+
                 );
 
             });
 
     }
 
+
+
+
     // ============================
-// 分类筛选
-// ============================
+    // 分类筛选
+    // ============================
 
-if(
-    currentNoteCategory &&
-    currentNoteCategory !== "全部"
-){
 
-    notes =
-        notes.filter(note=>{
+    if(
+        currentNoteCategory &&
+        currentNoteCategory !== "全部"
+    ){
 
-            return (
-                note.category
-                === currentNoteCategory
-            );
+        notes =
+            notes.filter(note=>{
 
-        });
+                return(
+                    note.category ===
+                    currentNoteCategory
+                );
 
-}
+            });
+
+    }
+
+
 
 
     // ============================
     // 置顶优先
     // ============================
+
 
     notes.sort((a,b)=>{
 
@@ -1761,12 +1370,17 @@ if(
     });
 
 
+
+
     list.innerHTML = "";
+
+
 
 
     // ============================
     // 没有笔记
     // ============================
+
 
     if(notes.length === 0){
 
@@ -1777,25 +1391,35 @@ if(
                 📒
 
                 <div>
+
                     ${
                         keyword
-                        ? "没有找到相关笔记"
-                        : "暂无笔记"
+                        ?
+                        "没有找到相关笔记"
+                        :
+                        "暂无笔记"
                     }
+
                 </div>
 
             </div>
 
         `;
 
+
+        updateNotePageInfo();
+
         return;
 
     }
 
 
+
+
     // ============================
     // 创建笔记卡片
     // ============================
+
 
     notes.forEach(note=>{
 
@@ -1816,15 +1440,17 @@ if(
         }
 
 
+
+
         // ========================
         // 内容预览
         // ========================
+
 
         let preview =
             note.content || "";
 
 
-        // 去掉 HTML
         preview =
             preview
             .replace(
@@ -1850,25 +1476,33 @@ if(
         }
 
 
+
+
         // ========================
         // 标签
         // ========================
+
 
         const tagsHTML =
             (note.tags || [])
             .map(tag=>`
 
                 <span class="note-tag">
+
                     ${escapeNoteHTML(tag)}
+
                 </span>
 
             `)
             .join("");
 
 
+
+
         // ========================
         // 卡片
         // ========================
+
 
         div.innerHTML = `
 
@@ -1922,10 +1556,12 @@ if(
                 <span>
 
                     📂
+
                     ${
                         escapeNoteHTML(
                             note.category
-                            || "其他"
+                            ||
+                            "其他"
                         )
                     }
 
@@ -1935,6 +1571,7 @@ if(
                 <span>
 
                     🕒
+
                     ${
                         note.updateTime
                         ||
@@ -2005,22 +1642,28 @@ if(
         `;
 
 
+
+
         // ========================
         // 编辑
         // ========================
 
+
         div
-.querySelector(".editNote")
-.onclick = ()=>{
+        .querySelector(".editNote")
+        .onclick=()=>{
 
-    openNoteEditor(note);
+            openNoteEditor(note);
 
-};
+        };
+
+
 
 
         // ========================
         // 收藏
         // ========================
+
 
         div
         .querySelector(".favoriteBtn")
@@ -2038,9 +1681,12 @@ if(
         };
 
 
+
+
         // ========================
         // 置顶
         // ========================
+
 
         div
         .querySelector(".pinNote")
@@ -2058,9 +1704,12 @@ if(
         };
 
 
+
+
         // ========================
         // 删除
         // ========================
+
 
         div
         .querySelector(".deleteNote")
@@ -2074,6 +1723,7 @@ if(
 
 
             if(!ok)
+
                 return;
 
 
@@ -2103,12 +1753,18 @@ if(
 
     });
 
+
+    updateNotePageInfo();
+
 }
 
 
+
+
 // ================================
-// 防止笔记内容 HTML 注入显示
+// 防止笔记 HTML 注入显示
 // ================================
+
 
 function escapeNoteHTML(value){
 
@@ -2136,296 +1792,358 @@ function escapeNoteHTML(value){
 
 }
 
-// ================================
-// 保存 / 修改笔记
-// ================================
 
 
-if($("saveNote")){
 
+// ============================================================
+// 笔记页面导航
+// ============================================================
+//
+// 这里使用 NotesManager 原来的数据。
+// 不修改 NotesManager。
+// 不删除历史笔记列表。
+// 不修改 CSS。
+//
+// 排序与 renderNotes() 保持一致：
+// 1. 置顶优先
+// 2. ID 新的在前
+//
+// ============================================================
 
-$("saveNote")
-.onclick=
-async()=>{
 
+async function getNotePageList(){
 
+    if(!window.NotesManager)
 
-let data={
+        return [];
 
 
+    await NotesManager.loadNotes();
 
-title:
 
-$("noteTitle")
-.value
-.trim(),
+    let notes =
+        NotesManager.getNotes()
+        || [];
 
 
+    notes =
+        [...notes]
+        .sort((a,b)=>{
 
+            if(
+                Boolean(a.pinned) !==
+                Boolean(b.pinned)
+            ){
 
+                return b.pinned - a.pinned;
 
-content:
+            }
 
-$("noteEditor")
-.innerHTML,
 
+            return b.id - a.id;
 
+        });
 
 
-
-
-
-category:
-
-$("noteCategory")
-.value,
-
-
-
-
-
-
-
-tags:
-
-$("noteTags")
-.value
-
-.split(",")
-
-.map(x=>x.trim())
-
-.filter(x=>x),
-
-
-
-
-
-
-
-
-todo:[]
-
-
-
-
-};
-
-
-
-
-
-
-
-
-
-if(!data.title){
-
-
-alert(
-
-"请输入笔记标题"
-
-);
-
-
-return;
-
+    return notes;
 
 }
 
 
 
 
+// ============================================================
+// 根据 ID 同步当前页面位置
+// ============================================================
 
 
+async function setCurrentNotePageById(noteId){
+
+    const notes =
+        await getNotePageList();
 
 
-
-// ================================
-// 编辑模式
-// ================================
-
-
-if(editingNoteId){
+    currentNotePageIndex =
+        notes.findIndex(
+            note =>
+                note.id === noteId
+        );
 
 
-
-await NotesManager.updateNote(
-
-editingNoteId,
-
-data
-
-);
+    updateNotePageInfo();
 
 
-
-editingNoteId=null;
-
-
-
-alert(
-
-"笔记修改成功"
-
-);
-
-
-
-}
-
-else{
-
-
-
-// 新建
-
-
-await NotesManager.createNote(
-
-data
-
-);
-
-// 强制刷新笔记数据
-
-await NotesManager.loadNotes();
-
-
-console.log(
-"保存后的笔记:",
-NotesManager.getNotes()
-);
-
-
-alert(
-
-"笔记保存成功"
-
-);
-
-
+    return notes;
 
 }
 
 
 
 
+// ============================================================
+// 更新顶部“第 X 页”
+// ============================================================
 
 
+async function updateNotePageInfo(){
+
+    const info =
+        $("notePageInfo");
 
 
+    if(!info)
 
-// 重新读取数据库
-
-
-await NotesManager.loadNotes();
+        return;
 
 
+    const notes =
+        await getNotePageList();
 
 
+    if(!notes.length){
+
+        info.innerText =
+            "暂无历史笔记";
+
+        return;
+
+    }
 
 
+    /*
+     * 新建页面状态
+     */
+    if(
+        currentNotePageIndex === -1
+    ){
 
-renderNotes();
+        info.innerText =
+            "新页面";
 
+        return;
 
-
-
-
-
-
-
-
-// 清空编辑区
-
-
-$("noteTitle").value="";
+    }
 
 
-$("noteTags").value="";
+    /*
+     * 防止 index 越界
+     */
+    let index =
+        currentNotePageIndex;
 
 
-$("noteEditor").innerHTML="";
+    if(index < 0)
+
+        index=0;
 
 
+    if(index >= notes.length)
+
+        index =
+            notes.length - 1;
 
 
-
-};
-
-
-
-
-
+    info.innerText =
+        "第 " +
+        (index + 1) +
+        " 页 / 共 " +
+        notes.length +
+        " 页";
 
 }
 
 
 
 
+// ============================================================
+// 打开历史笔记
+// ============================================================
 
 
+async function openHistoryNote(note){
+
+    if(!note)
+
+        return;
 
 
+    editingNoteId =
+        note.id;
 
 
-
-// ================================
-// 清空笔记
-// ================================
+    noteEditMode =
+        true;
 
 
-if($("clearNote")){
+    // ============================
+    // 标题
+    // ============================
 
 
-$("clearNote")
+    if($("noteTitle")){
 
-.onclick=()=>{
+        $("noteTitle").value =
+            note.title || "";
 
-
-
-editingNoteId=null;
-
+    }
 
 
-$("noteTitle").value="";
+    // ============================
+    // 分类
+    // ============================
 
 
-$("noteTags").value="";
+    if($("noteCategory")){
+
+        $("noteCategory").value =
+            note.category || "其他";
+
+    }
 
 
-$("noteEditor").innerHTML="";
+    // ============================
+    // 标签
+    // ============================
 
 
+    if($("noteTags")){
 
-};
+        $("noteTags").value =
+            (note.tags || [])
+            .join(",");
+
+    }
 
 
+    // ============================
+    // 内容
+    // ============================
+
+
+    if($("noteEditor")){
+
+        $("noteEditor").innerHTML =
+            note.content || "";
+
+    }
+
+
+    // ============================
+    // 编辑器顶部
+    // ============================
+
+
+    if($("noteEditorHeader")){
+
+        $("noteEditorHeader").style.display =
+            "flex";
+
+    }
+
+
+    if($("noteEditorTitle")){
+
+        $("noteEditorTitle").innerText =
+            note.title ||
+            "无标题";
+
+    }
+
+
+    if($("noteSaveStatus")){
+
+        $("noteSaveStatus").innerText =
+            "已保存";
+
+    }
+
+
+    // ============================
+    // 隐藏历史列表
+    // ============================
+
+
+    const searchBox =
+        $("noteSearch")
+        ?.closest(".box");
+
+
+    const categories =
+        $("noteCategories")
+        ?.closest(".box");
+
+
+    const list =
+        $("notesList");
+
+
+    if(searchBox)
+
+        searchBox.style.display =
+            "none";
+
+
+    if(categories)
+
+        categories.style.display =
+            "none";
+
+
+    if(list)
+
+        list.style.display =
+            "none";
+
+
+    // ============================
+    // 同步页码
+    // ============================
+
+
+    await setCurrentNotePageById(
+        note.id
+    );
+
+
+    // ============================
+    // 滚动到编辑器
+    // ============================
+
+
+    if($("noteEditor")){
+
+        $("noteEditor").scrollIntoView({
+
+            behavior:"smooth",
+
+            block:"start"
+
+        });
+
+
+        $("noteEditor").focus();
+
+    }
 
 }
 
 
 
-// ================================
-// 笔记编辑模式
-// ================================
 
-let noteEditMode = false;
-
-
-// ================================
+// ============================================================
 // 打开笔记编辑器
-// ================================
+// ============================================================
+
 
 function openNoteEditor(note = null){
 
-    noteEditMode = true;
+    noteEditMode =
+        true;
 
 
     const header =
         $("noteEditorHeader");
+
 
     if(header){
 
@@ -2441,6 +2159,13 @@ function openNoteEditor(note = null){
 
     const status =
         $("noteSaveStatus");
+
+
+
+
+    // ========================================================
+    // 编辑历史笔记
+    // ========================================================
 
 
     if(note){
@@ -2482,7 +2207,23 @@ function openNoteEditor(note = null){
 
         }
 
+
+        /*
+         * 同步当前页
+         */
+        setCurrentNotePageById(
+            note.id
+        );
+
     }
+
+
+
+
+    // ========================================================
+    // 新建笔记
+    // ========================================================
+
 
     else{
 
@@ -2490,8 +2231,16 @@ function openNoteEditor(note = null){
             null;
 
 
+        currentNotePageIndex =
+            -1;
+
+
         $("noteTitle").value =
             "";
+
+
+        $("noteCategory").value =
+            "其他";
 
 
         $("noteTags").value =
@@ -2517,10 +2266,18 @@ function openNoteEditor(note = null){
 
         }
 
+
+        updateNotePageInfo();
+
     }
 
 
-    // 隐藏列表区域
+
+
+    // ========================================================
+    // 隐藏历史列表
+    // ========================================================
+
 
     const searchBox =
         $("noteSearch")
@@ -2537,21 +2294,27 @@ function openNoteEditor(note = null){
 
 
     if(searchBox)
+
         searchBox.style.display =
             "none";
 
 
     if(categories)
+
         categories.style.display =
             "none";
 
 
     if(list)
+
         list.style.display =
             "none";
 
 
-    // 编辑区显示
+    // ========================================================
+    // 编辑器显示
+    // ========================================================
+
 
     const editor =
         $("noteEditor");
@@ -2575,13 +2338,883 @@ function openNoteEditor(note = null){
 }
 
 
-// ================================
+
+
+// ============================================================
+// 新页面
+// ============================================================
+
+
+async function createNewNotePage(){
+
+    /*
+     * 注意：
+     *
+     * 这里只清空编辑器。
+     *
+     * 不调用 deleteNote。
+     * 不修改历史笔记。
+     * 不替换 notesList。
+     */
+    editingNoteId =
+        null;
+
+
+    currentNotePageIndex =
+        -1;
+
+
+    noteEditMode =
+        true;
+
+
+    if($("noteTitle")){
+
+        $("noteTitle").value =
+            "";
+
+    }
+
+
+    if($("noteCategory")){
+
+        $("noteCategory").value =
+            "其他";
+
+    }
+
+
+    if($("noteTags")){
+
+        $("noteTags").value =
+            "";
+
+    }
+
+
+    if($("noteEditor")){
+
+        $("noteEditor").innerHTML =
+            "";
+
+    }
+
+
+    if($("noteEditorHeader")){
+
+        $("noteEditorHeader").style.display =
+            "flex";
+
+    }
+
+
+    if($("noteEditorTitle")){
+
+        $("noteEditorTitle").innerText =
+            "新建笔记";
+
+    }
+
+
+    if($("noteSaveStatus")){
+
+        $("noteSaveStatus").innerText =
+            "新建";
+
+    }
+
+
+    /*
+     * 隐藏列表，但绝不删除列表。
+     */
+    const searchBox =
+        $("noteSearch")
+        ?.closest(".box");
+
+
+    const categories =
+        $("noteCategories")
+        ?.closest(".box");
+
+
+    const list =
+        $("notesList");
+
+
+    if(searchBox)
+
+        searchBox.style.display =
+            "none";
+
+
+    if(categories)
+
+        categories.style.display =
+            "none";
+
+
+    if(list)
+
+        list.style.display =
+            "none";
+
+
+    updateNotePageInfo();
+
+
+    if($("noteEditor")){
+
+        $("noteEditor").scrollIntoView({
+
+            behavior:"smooth",
+
+            block:"start"
+
+        });
+
+
+        $("noteEditor").focus();
+
+    }
+
+}
+
+
+
+
+// ============================================================
+// 上一页
+// ============================================================
+
+
+async function previousNotePage(){
+
+    const notes =
+        await getNotePageList();
+
+
+    if(!notes.length){
+
+        alert(
+            "暂无历史笔记"
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * 如果当前正在新建页面，
+     * 上一页直接进入最新历史笔记。
+     */
+    if(
+        currentNotePageIndex === -1
+    ){
+
+        currentNotePageIndex =
+            0;
+
+    }
+
+    else{
+
+        currentNotePageIndex--;
+
+    }
+
+
+    if(
+        currentNotePageIndex < 0
+    ){
+
+        currentNotePageIndex =
+            0;
+
+
+        alert(
+            "已经是第一条笔记"
+        );
+
+
+        updateNotePageInfo();
+
+
+        return;
+
+    }
+
+
+    const note =
+        notes[
+            currentNotePageIndex
+        ];
+
+
+    if(!note)
+
+        return;
+
+
+    await openHistoryNote(
+        note
+    );
+
+}
+
+
+
+
+// ============================================================
+// 下一页
+// ============================================================
+
+
+async function nextNotePage(){
+
+    const notes =
+        await getNotePageList();
+
+
+    if(!notes.length){
+
+        alert(
+            "暂无历史笔记"
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * 新页面 → 最新历史笔记
+     */
+    if(
+        currentNotePageIndex === -1
+    ){
+
+        currentNotePageIndex =
+            0;
+
+    }
+
+    else{
+
+        currentNotePageIndex++;
+
+    }
+
+
+    if(
+        currentNotePageIndex >=
+        notes.length
+    ){
+
+        currentNotePageIndex =
+            notes.length - 1;
+
+
+        alert(
+            "已经是最后一条笔记"
+        );
+
+
+        updateNotePageInfo();
+
+
+        return;
+
+    }
+
+
+    const note =
+        notes[
+            currentNotePageIndex
+        ];
+
+
+    if(!note)
+
+        return;
+
+
+    await openHistoryNote(
+        note
+    );
+
+}
+
+
+
+
+// ============================================================
+// 删除当前页面
+// ============================================================
+
+
+async function deleteCurrentNotePage(){
+
+    /*
+     * 如果当前是新页面，
+     * 没有真正保存的笔记。
+     */
+    if(!editingNoteId){
+
+        const ok =
+            confirm(
+                "当前页面还没有保存，确定关闭新页面吗？"
+            );
+
+
+        if(!ok)
+
+            return;
+
+
+        await closeNoteEditor();
+
+
+        return;
+
+    }
+
+
+    const notes =
+        await getNotePageList();
+
+
+    const deletedIndex =
+        currentNotePageIndex;
+
+
+    const currentNote =
+        notes.find(
+            note =>
+                note.id ===
+                editingNoteId
+        );
+
+
+    if(!currentNote){
+
+        editingNoteId =
+            null;
+
+
+        await closeNoteEditor();
+
+
+        return;
+
+    }
+
+
+    const ok =
+        confirm(
+            "确定删除当前笔记？\n\n删除后无法恢复。"
+        );
+
+
+    if(!ok)
+
+        return;
+
+
+    /*
+     * 使用原来的 NotesManager 删除。
+     */
+    await NotesManager.deleteNote(
+        editingNoteId
+    );
+
+
+    /*
+     * 当前编辑状态清空。
+     */
+    editingNoteId =
+        null;
+
+
+    noteEditMode =
+        false;
+
+
+    /*
+     * 重新加载 NotesManager。
+     */
+    await NotesManager.loadNotes();
+
+
+    const remainingNotes =
+        await getNotePageList();
+
+
+    /*
+     * 删除以后还有历史笔记。
+     */
+    if(remainingNotes.length){
+
+        let newIndex =
+            deletedIndex;
+
+
+        /*
+         * 如果删除的是最后一条，
+         * 自动选择前一条。
+         */
+        if(
+            newIndex >=
+            remainingNotes.length
+        ){
+
+            newIndex =
+                remainingNotes.length - 1;
+
+        }
+
+
+        if(newIndex < 0){
+
+            newIndex =
+                0;
+
+        }
+
+
+        currentNotePageIndex =
+            newIndex;
+
+
+        await openHistoryNote(
+            remainingNotes[
+                currentNotePageIndex
+            ]
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+     * 已经没有任何历史笔记。
+     */
+    currentNotePageIndex =
+        -1;
+
+
+    await closeNoteEditor();
+
+}
+
+
+
+
+// ============================================================
+// 绑定顶部按钮
+// ============================================================
+
+
+// 上一页
+if($("prevNotePage")){
+
+    $("prevNotePage").onclick =
+        async()=>{
+
+            await previousNotePage();
+
+        };
+
+}
+
+
+// 下一页
+if($("nextNotePage")){
+
+    $("nextNotePage").onclick =
+        async()=>{
+
+            await nextNotePage();
+
+        };
+
+}
+
+
+// 新页面
+if($("newNotePage")){
+
+    $("newNotePage").onclick =
+        async()=>{
+
+            await createNewNotePage();
+
+        };
+
+}
+
+
+// 删除页面
+if($("deleteCurrentNote")){
+
+    $("deleteCurrentNote").onclick =
+        async()=>{
+
+            await deleteCurrentNotePage();
+
+        };
+
+}
+
+
+
+
+// ============================================================
+// 保存 / 修改笔记
+// ============================================================
+
+
+if($("saveNote")){
+
+    $("saveNote")
+    .onclick=
+    async()=>{
+
+        let data={
+
+            title:
+                $("noteTitle")
+                .value
+                .trim(),
+
+            content:
+                $("noteEditor")
+                .innerHTML,
+
+            category:
+                $("noteCategory")
+                .value,
+
+            tags:
+                $("noteTags")
+                .value
+                .split(",")
+                .map(
+                    x =>
+                        x.trim()
+                )
+                .filter(x=>x),
+
+            todo:[]
+
+        };
+
+
+        if(!data.title){
+
+            alert(
+                "请输入笔记标题"
+            );
+
+            return;
+
+        }
+
+
+
+
+        // ====================================================
+        // 修改历史笔记
+        // ====================================================
+
+
+        if(editingNoteId){
+
+            await NotesManager.updateNote(
+                editingNoteId,
+                data
+            );
+
+
+            /*
+             * 修改后重新读取。
+             */
+            await NotesManager.loadNotes();
+
+
+            /*
+             * 保持当前页面位置。
+             */
+            await setCurrentNotePageById(
+                editingNoteId
+            );
+
+
+            if($("noteSaveStatus")){
+
+                $("noteSaveStatus").innerText =
+                    "已保存";
+
+            }
+
+
+            alert(
+                "笔记修改成功"
+            );
+
+        }
+
+
+
+
+        // ====================================================
+        // 新建笔记
+        // ====================================================
+
+
+        else{
+
+            const createdNote =
+                await NotesManager.createNote(
+                    data
+                );
+
+
+            /*
+             * 重新读取数据库。
+             */
+            await NotesManager.loadNotes();
+
+
+            const notes =
+                await getNotePageList();
+
+
+            /*
+             * 找到刚刚创建的笔记。
+             *
+             * 优先使用 createNote 返回的 ID。
+             */
+            let createdId =
+                createdNote?.id;
+
+
+            let newNote =
+                null;
+
+
+            if(createdId){
+
+                newNote =
+                    notes.find(
+                        note =>
+                            note.id ===
+                            createdId
+                    );
+
+            }
+
+
+            /*
+             * 如果 NotesManager.createNote()
+             * 没有返回对象，则根据标题、
+             * 最新 ID 找到刚刚保存的笔记。
+             */
+            if(!newNote){
+
+                newNote =
+                    notes.find(
+                        note =>
+                            note.title ===
+                            data.title
+                    );
+
+            }
+
+
+            if(!newNote && notes.length){
+
+                newNote =
+                    notes[0];
+
+            }
+
+
+            /*
+             * 新笔记保存成功后，
+             * 让它成为当前页面。
+             */
+            if(newNote){
+
+                editingNoteId =
+                    newNote.id;
+
+
+                currentNotePageIndex =
+                    notes.findIndex(
+                        note =>
+                            note.id ===
+                            newNote.id
+                    );
+
+            }
+
+
+            if($("noteSaveStatus")){
+
+                $("noteSaveStatus").innerText =
+                    "已保存";
+
+            }
+
+
+            alert(
+                "笔记保存成功"
+            );
+
+        }
+
+
+
+
+        /*
+         * 刷新历史笔记数据。
+         *
+         * 不删除历史列表。
+         */
+        await NotesManager.loadNotes();
+
+
+        /*
+         * 如果当前仍然有编辑中的笔记，
+         * 保持页面索引。
+         */
+        if(editingNoteId){
+
+            await setCurrentNotePageById(
+                editingNoteId
+            );
+
+        }
+
+
+        renderNotes();
+
+
+
+
+        /*
+         * 保存按钮原来的行为：
+         * 清空编辑区。
+         *
+         * 这里保留。
+         *
+         * 但如果刚刚保存的是新笔记，
+         * 当前页面仍然记录为这条历史笔记。
+         */
+        $("noteTitle").value="";
+
+        $("noteTags").value="";
+
+        $("noteEditor").innerHTML="";
+
+
+        /*
+         * 保存完成以后，
+         * editingNoteId 保留当前笔记 ID。
+         *
+         * 这样页面导航仍然知道
+         * 当前是哪一页。
+         */
+    };
+
+}
+
+
+
+
+// ============================================================
+// 清空笔记
+// ============================================================
+
+
+if($("clearNote")){
+
+    $("clearNote")
+    .onclick=()=>{
+
+        /*
+         * 只清空编辑器。
+         *
+         * 不删除数据库中的历史笔记。
+         */
+        editingNoteId=null;
+
+        currentNotePageIndex=-1;
+
+
+        $("noteTitle").value="";
+
+        $("noteTags").value="";
+
+        $("noteEditor").innerHTML="";
+
+
+        if($("noteCategory")){
+
+            $("noteCategory").value =
+                "其他";
+
+        }
+
+
+        if($("noteEditorTitle")){
+
+            $("noteEditorTitle").innerText =
+                "新建笔记";
+
+        }
+
+
+        if($("noteSaveStatus")){
+
+            $("noteSaveStatus").innerText =
+                "新建";
+
+        }
+
+
+        updateNotePageInfo();
+
+    };
+
+}
+
+
+
+
+// ============================================================
 // 返回笔记列表
-// ================================
+// ============================================================
+
 
 async function closeNoteEditor(){
 
-    noteEditMode = false;
+    noteEditMode =
+        false;
+
+
+    /*
+     * 当前不再处于某条历史笔记的编辑状态。
+     */
+    editingNoteId =
+        null;
+
+
+    currentNotePageIndex =
+        -1;
 
 
     const header =
@@ -2611,16 +3244,19 @@ async function closeNoteEditor(){
 
 
     if(searchBox)
+
         searchBox.style.display =
             "";
 
 
     if(categories)
+
         categories.style.display =
             "";
 
 
     if(list)
+
         list.style.display =
             "";
 
@@ -2628,6 +3264,7 @@ async function closeNoteEditor(){
     await renderNotes();
 
 }
+
 
 if($("backToNotes")){
 
@@ -2643,14 +3280,9 @@ if($("backToNotes")){
 
 
 
-
-
-
-
-// ================================
-// ================================
+// ============================================================
 // 笔记编辑器
-// ================================
+// ============================================================
 
 
 // 当前编辑器
@@ -2661,33 +3293,44 @@ function getNoteEditor(){
 }
 
 
-// ================================
+
+
+// ============================================================
 // 保持编辑器焦点
-// ================================
+// ============================================================
+
 
 function focusNoteEditor(){
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return;
+
 
     editor.focus();
 
 }
 
 
-// ================================
+
+
+// ============================================================
 // 获取当前光标 Range
-// ================================
+// ============================================================
+
 
 function getEditorRange(){
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return null;
 
 
@@ -2725,11 +3368,88 @@ function getEditorRange(){
 }
 
 
-// ================================
-// 光标移动到指定节点末尾
-// ================================
+
+
+// ============================================================
+// 光标移动到清单文字末尾
+// ============================================================
+
 
 function placeCaretAfter(node){
+
+    const editor =
+        getNoteEditor();
+
+
+    if(!editor || !node)
+
+        return;
+
+
+    const text =
+        node.querySelector(
+            ".note-check-text"
+        );
+
+
+    if(!text)
+
+        return;
+
+
+    const selection =
+        window.getSelection();
+
+
+    if(!selection)
+
+        return;
+
+
+    const range =
+        document.createRange();
+
+
+    editor.focus();
+
+
+    range.selectNodeContents(
+        text
+    );
+
+
+    range.collapse(false);
+
+
+    selection.removeAllRanges();
+
+
+    selection.addRange(
+        range
+    );
+
+}
+
+
+
+
+// ============================================================
+// 普通文字格式
+// ============================================================
+
+
+// ================================
+// 编辑器当前选区保存
+// ================================
+
+let savedNoteRange = null;
+
+
+// ================================
+// 保存当前选区
+// ================================
+
+function saveNoteSelection(){
 
     const editor =
         getNoteEditor();
@@ -2741,27 +3461,82 @@ function placeCaretAfter(node){
     const selection =
         window.getSelection();
 
+    if(
+        !selection ||
+        !selection.rangeCount
+    )
+        return;
+
+
     const range =
-        document.createRange();
+        selection.getRangeAt(0);
 
 
-    range.selectNodeContents(node);
+    /*
+     * 必须确认选区属于笔记编辑器
+     */
+    if(
+        !editor.contains(
+            range.commonAncestorContainer
+        )
+    )
+        return;
 
-    range.collapse(false);
 
-
-    selection.removeAllRanges();
-
-    selection.addRange(range);
-
-
-    editor.focus();
+    /*
+     * cloneRange 非常重要
+     * 防止后续 DOM 操作改变原来的 Range
+     */
+    savedNoteRange =
+        range.cloneRange();
 
 }
 
 
 // ================================
-// 普通文字格式
+// 恢复当前选区
+// ================================
+
+function restoreNoteSelection(){
+
+    const editor =
+        getNoteEditor();
+
+    if(
+        !editor ||
+        !savedNoteRange
+    )
+        return;
+
+
+    const selection =
+        window.getSelection();
+
+    if(!selection)
+        return;
+
+
+    /*
+     * 先重新 focus 编辑器
+     */
+    editor.focus();
+
+
+    /*
+     * 恢复选区
+     */
+    selection.removeAllRanges();
+
+    selection.addRange(
+        savedNoteRange
+    );
+
+}
+
+
+// ================================
+// 改变文字样式
+// B / I / U / H1
 // ================================
 
 function formatText(type){
@@ -2773,8 +3548,42 @@ function formatText(type){
         return;
 
 
-    editor.focus();
+    /*
+     * 先恢复用户刚才选中的文字
+     */
+    restoreNoteSelection();
 
+
+    const selection =
+        window.getSelection();
+
+    if(
+        !selection ||
+        !selection.rangeCount
+    )
+        return;
+
+
+    const range =
+        selection.getRangeAt(0);
+
+
+    /*
+     * 确认选区在编辑器里面
+     */
+    if(
+        !editor.contains(
+            range.commonAncestorContainer
+        )
+    )
+        return;
+
+
+    /*
+     * ============================
+     * H1
+     * ============================
+     */
 
     if(type === "title"){
 
@@ -2786,7 +3595,18 @@ function formatText(type){
 
     }
 
-    else{
+
+    /*
+     * ============================
+     * B / I / U
+     * ============================
+     */
+
+    else if(
+        type === "bold" ||
+        type === "italic" ||
+        type === "underline"
+    ){
 
         document.execCommand(
             type,
@@ -2797,14 +3617,73 @@ function formatText(type){
     }
 
 
+    /*
+     * ============================
+     * 保存修改后的选区
+     * ============================
+     */
+
+    const newSelection =
+        window.getSelection();
+
+
+    if(
+        newSelection &&
+        newSelection.rangeCount
+    ){
+
+        savedNoteRange =
+            newSelection
+            .getRangeAt(0)
+            .cloneRange();
+
+    }
+
+
+    /*
+     * 保持编辑器焦点
+     */
+    editor.focus();
+
+
+    /*
+     * 再次恢复选中状态
+     *
+     * 这样点击 B/I/U/H1 后，
+     * 文字仍然保持选中。
+     */
+    if(savedNoteRange){
+
+        const finalSelection =
+            window.getSelection();
+
+
+        finalSelection
+            .removeAllRanges();
+
+
+        finalSelection
+            .addRange(
+                savedNoteRange
+            );
+
+    }
+
+
+    /*
+     * 自动保存
+     */
     scheduleNoteAutoSave();
 
 }
 
 
-// ================================
+
+
+// ============================================================
 // 创建清单行
-// ================================
+// ============================================================
+
 
 function createTodoLine(text = ""){
 
@@ -2814,6 +3693,12 @@ function createTodoLine(text = ""){
 
     line.className =
         "note-check-line";
+
+
+    line.setAttribute(
+        "contenteditable",
+        "false"
+    );
 
 
     const checkbox =
@@ -2828,10 +3713,20 @@ function createTodoLine(text = ""){
         "note-checkbox";
 
 
-    const textNode =
-        document.createTextNode(
-            text
-        );
+    const textSpan =
+        document.createElement("span");
+
+
+    textSpan.className =
+        "note-check-text";
+
+
+    textSpan.contentEditable =
+        "true";
+
+
+    textSpan.innerText =
+        text;
 
 
     line.appendChild(
@@ -2840,7 +3735,7 @@ function createTodoLine(text = ""){
 
 
     line.appendChild(
-        textNode
+        textSpan
     );
 
 
@@ -2849,115 +3744,158 @@ function createTodoLine(text = ""){
 }
 
 
-// ================================
+
+
+// ============================================================
 // 插入清单
-// ================================
+// ============================================================
+
 
 function insertTodo(){
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return;
-
-
-    editor.focus();
 
 
     let range =
         getEditorRange();
 
 
-    // 没有光标时放到最后
     if(!range){
+
+        editor.focus();
+
 
         range =
             document.createRange();
 
+
         range.selectNodeContents(
             editor
         );
+
 
         range.collapse(false);
 
     }
 
 
-    // 找当前所在行
-    let current =
+    let node =
         range.startContainer;
 
 
+    let currentTodo =
+        null;
+
+
     while(
-        current &&
-        current !== editor &&
-        !(
-            current.nodeType === 1 &&
-            current.classList &&
-            current.classList.contains(
+        node &&
+        node !== editor
+    ){
+
+        if(
+            node.nodeType === 1 &&
+            node.classList &&
+            node.classList.contains(
                 "note-check-line"
             )
-        )
-    ){
+        ){
 
-        current =
-            current.parentNode;
-
-    }
+            currentTodo =
+                node;
 
 
-    // 如果已经在清单行
-    if(
-        current &&
-        current !== editor &&
-        current.classList.contains(
-            "note-check-line"
-        )
-    ){
+            break;
 
-        placeCaretAfter(current);
+        }
 
-        return;
+
+        node =
+            node.parentNode;
 
     }
 
 
-    // 创建新的清单行
-    const line =
+    const newLine =
         createTodoLine();
 
 
-    range.deleteContents();
+    if(currentTodo){
 
-    range.insertNode(line);
+        currentTodo.after(
+            newLine
+        );
+
+    }
+
+    else{
+
+        range.deleteContents();
 
 
-    // 光标放到文字后面
-    const newRange =
-        document.createRange();
+        range.insertNode(
+            newLine
+        );
+
+    }
 
 
-    newRange.setStart(
-        line,
-        line.childNodes.length
-    );
+    const textSpan =
+        newLine.querySelector(
+            ".note-check-text"
+        );
 
-    newRange.collapse(true);
+
+    if(!textSpan)
+
+        return;
+
+
+    editor.focus();
 
 
     const selection =
         window.getSelection();
 
 
+    const newRange =
+        document.createRange();
+
+
+    newRange.selectNodeContents(
+        textSpan
+    );
+
+
+    newRange.collapse(false);
+
+
     selection.removeAllRanges();
+
 
     selection.addRange(
         newRange
     );
 
 
-    editor.focus();
+    requestAnimationFrame(()=>{
+
+        editor.focus();
+
+
+        selection.removeAllRanges();
+
+
+        selection.addRange(
+            newRange
+        );
+
+    });
 
 
     scheduleNoteAutoSave();
@@ -2965,16 +3903,21 @@ function insertTodo(){
 }
 
 
-// ================================
+
+
+// ============================================================
 // 插入分割线
-// ================================
+// ============================================================
+
 
 function insertLine(){
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return;
 
 
@@ -2985,15 +3928,16 @@ function insertLine(){
         getEditorRange();
 
 
-    // 没有光标
     if(!range){
 
         range =
             document.createRange();
 
+
         range.selectNodeContents(
             editor
         );
+
 
         range.collapse(false);
 
@@ -3003,7 +3947,6 @@ function insertLine(){
     range.deleteContents();
 
 
-    // 前面的换行
     const before =
         document.createElement(
             "div"
@@ -3014,7 +3957,6 @@ function insertLine(){
         "<br>";
 
 
-    // 分割线
     const hr =
         document.createElement(
             "hr"
@@ -3025,7 +3967,6 @@ function insertLine(){
         "note-divider";
 
 
-    // 分割线下面的新行
     const after =
         document.createElement(
             "div"
@@ -3036,7 +3977,6 @@ function insertLine(){
         "<br>";
 
 
-    // 建立结构
     const fragment =
         document.createDocumentFragment();
 
@@ -3045,9 +3985,11 @@ function insertLine(){
         before
     );
 
+
     fragment.appendChild(
         hr
     );
+
 
     fragment.appendChild(
         after
@@ -3059,7 +4001,6 @@ function insertLine(){
     );
 
 
-    // 光标放到分割线下面
     const newRange =
         document.createRange();
 
@@ -3078,6 +4019,7 @@ function insertLine(){
 
     selection.removeAllRanges();
 
+
     selection.addRange(
         newRange
     );
@@ -3091,20 +4033,26 @@ function insertLine(){
 }
 
 
-// ================================
+
+
+// ============================================================
 // Enter 自动处理
-// ================================
+// ============================================================
+
 
 function handleNoteEnter(e){
 
     if(e.key !== "Enter")
+
         return;
 
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return;
 
 
@@ -3116,6 +4064,7 @@ function handleNoteEnter(e){
         !selection ||
         !selection.rangeCount
     )
+
         return;
 
 
@@ -3123,8 +4072,8 @@ function handleNoteEnter(e){
         selection.anchorNode;
 
 
-    // 找当前清单行
-    let todoLine = null;
+    let todoLine =
+        null;
 
 
     while(
@@ -3140,7 +4089,9 @@ function handleNoteEnter(e){
             )
         ){
 
-            todoLine = node;
+            todoLine =
+                node;
+
 
             break;
 
@@ -3153,9 +4104,12 @@ function handleNoteEnter(e){
     }
 
 
-    // ==========================
-    // 清单回车
-    // ==========================
+
+
+    // ============================
+    // 清单 Enter
+    // ============================
+
 
     if(todoLine){
 
@@ -3171,27 +4125,68 @@ function handleNoteEnter(e){
         );
 
 
-        const range =
+        const textSpan =
+            newLine.querySelector(
+                ".note-check-text"
+            );
+
+
+        if(!textSpan)
+
+            return;
+
+
+        editor.focus();
+
+
+        const newRange =
             document.createRange();
 
 
-        range.setStart(
-            newLine,
-            newLine.childNodes.length
+        newRange.selectNodeContents(
+            textSpan
         );
 
 
-        range.collapse(true);
+        newRange.collapse(true);
 
 
         selection.removeAllRanges();
 
+
         selection.addRange(
-            range
+            newRange
         );
 
 
-        editor.focus();
+        requestAnimationFrame(()=>{
+
+            editor.focus();
+
+
+            selection.removeAllRanges();
+
+
+            selection.addRange(
+                newRange
+            );
+
+        });
+
+
+        setTimeout(()=>{
+
+            editor.focus();
+
+
+            selection.removeAllRanges();
+
+
+            selection.addRange(
+                newRange
+            );
+
+        },50);
 
 
         scheduleNoteAutoSave();
@@ -3202,16 +4197,24 @@ function handleNoteEnter(e){
     }
 
 
-    // 普通 Enter
-    // 浏览器默认行为保留
+
+
+    // ============================
+    // 普通文字 Enter
+    // ============================
+
+
     scheduleNoteAutoSave();
 
 }
 
 
-// ================================
+
+
+// ============================================================
 // 清单点击
-// ================================
+// ============================================================
+
 
 function handleTodoCheck(e){
 
@@ -3224,6 +4227,7 @@ function handleTodoCheck(e){
             "#noteEditor input[type='checkbox']"
         )
     )
+
         return;
 
 
@@ -3232,11 +4236,11 @@ function handleTodoCheck(e){
 }
 
 
-// ================================
-// 编辑器自动保存
-// ================================
 
-let noteAutoSaveTimer = null;
+
+// ============================================================
+// 编辑器自动保存
+// ============================================================
 
 
 function scheduleNoteAutoSave(){
@@ -3263,24 +4267,31 @@ function scheduleNoteAutoSave(){
 }
 
 
-// ================================
+
+
+// ============================================================
 // 静默保存当前笔记
-// ================================
+// ============================================================
+
 
 async function saveCurrentNoteSilently(){
 
     if(!editingNoteId)
+
         return;
 
 
     if(!window.NotesManager)
+
         return;
 
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return;
 
 
@@ -3290,16 +4301,21 @@ async function saveCurrentNoteSilently(){
 
 
     if(!title)
+
         return;
 
 
     const tags =
-        ($("noteTags")?.value || "")
-            .split(",")
-            .map(
-                x => x.trim()
-            )
-            .filter(Boolean);
+        (
+            $("noteTags")?.value
+            || ""
+        )
+        .split(",")
+        .map(
+            x =>
+                x.trim()
+        )
+        .filter(Boolean);
 
 
     const data = {
@@ -3326,6 +4342,13 @@ async function saveCurrentNoteSilently(){
         );
 
 
+        if($("noteSaveStatus")){
+
+            $("noteSaveStatus").innerText =
+                "已保存";
+
+        }
+
     }
 
     catch(error){
@@ -3340,47 +4363,60 @@ async function saveCurrentNoteSilently(){
 }
 
 
-// ================================
+
+
+// ============================================================
 // 编辑器事件
-// ================================
+// ============================================================
+
 
 if($("noteEditor")){
 
-
     $("noteEditor")
-        .addEventListener(
-            "keydown",
-            handleNoteEnter
-        );
-
-
-    $("noteEditor")
-        .addEventListener(
-            "change",
-            handleTodoCheck
-        );
+    .addEventListener(
+        "keydown",
+        handleNoteEnter
+    );
 
 
     $("noteEditor")
-        .addEventListener(
-            "input",
-            scheduleNoteAutoSave
-        );
+    .addEventListener(
+        "change",
+        handleTodoCheck
+    );
 
+
+    $("noteEditor")
+    .addEventListener(
+        "input",
+        scheduleNoteAutoSave
+    );
+
+
+    $("noteEditor")
+    .addEventListener(
+        "keydown",
+        handleTodoBackspace
+    );
 
 }
 
 
-// ================================
+
+
+// ============================================================
 // 撤销
-// ================================
+// ============================================================
+
 
 function undoNote(){
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return;
 
 
@@ -3399,16 +4435,21 @@ function undoNote(){
 }
 
 
-// ================================
+
+
+// ============================================================
 // 重做
-// ================================
+// ============================================================
+
 
 function redoNote(){
 
     const editor =
         getNoteEditor();
 
+
     if(!editor)
+
         return;
 
 
@@ -3426,10 +4467,13 @@ function redoNote(){
 
 }
 
-let currentNoteCategory = "全部";
-// ================================
-// 置顶
-// ================================
+
+
+
+// ============================================================
+// 当前笔记置顶
+// ============================================================
+
 
 function pinCurrentNote(){
 
@@ -3447,13 +4491,19 @@ function pinCurrentNote(){
     if(
         !window.NotesManager
     )
+
         return;
 
 
     NotesManager.togglePin(
         editingNoteId
     )
-    .then(()=>{
+    .then(async()=>{
+
+        await setCurrentNotePageById(
+            editingNoteId
+        );
+
 
         renderNotes();
 
@@ -3464,84 +4514,36 @@ function pinCurrentNote(){
 
 
 
-
-
-
-
-//function pinCurrentNote(){
-
-
-
-//alert(
-
-//"保存后可以设置置顶"
-
-//);
-
-
-
-//}
-
-
-
-
-// ================================
+// ============================================================
 // 待办事项
-// ================================
+// ============================================================
 
 
 if($("addTodo")){
 
+    $("addTodo")
+    .onclick=()=>{
 
-$("addTodo")
-
-.onclick=()=>{
-
-
-
-let value =
-
-$("todoInput")
-
-.value
-
-.trim();
+        let value =
+            $("todoInput")
+            .value
+            .trim();
 
 
+        if(!value)
+
+            return;
 
 
+        let div =
+            document.createElement("div");
 
 
-if(!value)
-
-return;
-
+        div.className =
+            "todo-item";
 
 
-
-
-
-
-
-
-let div=
-
-document.createElement("div");
-
-
-
-div.className=
-
-"todo-item";
-
-
-
-
-
-
-
-
-div.innerHTML=
+        div.innerHTML=
 
 `
 
@@ -3556,129 +4558,23 @@ ${value}
 `;
 
 
+        $("todoList")
+            .appendChild(div);
 
 
+        $("todoInput").value="";
 
-
-
-
-
-$("todoList")
-
-.appendChild(div);
-
-
-
-
-
-
-
-$("todoInput").value="";
-
-
-
-
-
-};
-
+    };
 
 }
 
 
 
 
-
-
-
-
-
-
-
-
-// ================================
-// 启动
-// ================================
-
-
-window.onload=
-
-async()=>{
-
-
-
-
-
-if(
-
-"serviceWorker"
-
-in navigator
-
-){
-
-
-
-navigator.serviceWorker.register(
-
-"service-worker.js"
-
-);
-
-
-
-}
-
-
-
-
-
-
-
-
-if(window.SecurityManager){
-
-
-
-SecurityManager.start();
-
-
-
-}
-
-
-
-
-
-
-
-
-
-// ⭐启动时加载笔记缓存
-
-
-if(window.NotesManager){
-
-
-
-await NotesManager.loadNotes();
-
-
-
-}
-
-
-
-
-
-};
-
-// ================================
+// ============================================================
 // 笔记搜索
-// ================================
+// ============================================================
 
-// ================================
-// 笔记搜索
-// ================================
 
 if($("noteSearch")){
 
@@ -3691,9 +4587,12 @@ if($("noteSearch")){
 }
 
 
-// ================================
+
+
+// ============================================================
 // 笔记分类
-// ================================
+// ============================================================
+
 
 if($("noteCategories")){
 
@@ -3709,25 +4608,27 @@ if($("noteCategories")){
 
 
             if(!button)
+
                 return;
 
 
             currentNoteCategory =
                 button.dataset.category
-                || "全部";
+                ||
+                "全部";
 
 
             document
-                .querySelectorAll(
-                    ".note-category"
-                )
-                .forEach(btn=>{
+            .querySelectorAll(
+                ".note-category"
+            )
+            .forEach(btn=>{
 
-                    btn.classList.remove(
-                        "active"
-                    );
+                btn.classList.remove(
+                    "active"
+                );
 
-                });
+            });
 
 
             button.classList.add(
@@ -3741,3 +4642,253 @@ if($("noteCategories")){
     );
 
 }
+
+
+
+
+// ============================================================
+// Backspace 清单逻辑
+// ============================================================
+
+
+function handleTodoBackspace(e){
+
+    if(e.key !== "Backspace")
+
+        return;
+
+
+    const selection =
+        window.getSelection();
+
+
+    if(
+        !selection ||
+        !selection.rangeCount
+    )
+
+        return;
+
+
+    if(!selection.isCollapsed)
+
+        return;
+
+
+    let node =
+        selection.anchorNode;
+
+
+    let textSpan =
+        null;
+
+
+    let todoLine =
+        null;
+
+
+    while(
+        node &&
+        node.id !== "noteEditor"
+    ){
+
+        if(
+            node.nodeType === 1 &&
+            node.classList &&
+            node.classList.contains(
+                "note-check-text"
+            )
+        ){
+
+            textSpan =
+                node;
+
+        }
+
+
+        if(
+            node.nodeType === 1 &&
+            node.classList &&
+            node.classList.contains(
+                "note-check-line"
+            )
+        ){
+
+            todoLine =
+                node;
+
+            break;
+
+        }
+
+
+        node =
+            node.parentNode;
+
+    }
+
+
+    if(
+        !textSpan ||
+        !todoLine
+    )
+
+        return;
+
+
+    const range =
+        selection.getRangeAt(0);
+
+
+    if(
+        range.startContainer ===
+        textSpan
+    ){
+
+        if(
+            range.startOffset !==
+            0
+        )
+
+            return;
+
+    }
+
+    else{
+
+        if(
+            range.startContainer.nodeType ===
+            Node.TEXT_NODE
+        ){
+
+            if(
+                range.startOffset !==
+                0
+            )
+
+                return;
+
+        }
+
+    }
+
+
+    const text =
+        textSpan.innerText
+        .replace(
+            /\u200B/g,
+            ""
+        )
+        .trim();
+
+
+    if(text === ""){
+
+        e.preventDefault();
+
+
+        const previous =
+            todoLine.previousElementSibling;
+
+
+        todoLine.remove();
+
+
+        if(previous){
+
+            const previousText =
+                previous.querySelector(
+                    ".note-check-text"
+                );
+
+
+            if(previousText){
+
+                const editor =
+                    getNoteEditor();
+
+
+                const newRange =
+                    document.createRange();
+
+
+                const newSelection =
+                    window.getSelection();
+
+
+                editor.focus();
+
+
+                newRange.selectNodeContents(
+                    previousText
+                );
+
+
+                newRange.collapse(false);
+
+
+                newSelection.removeAllRanges();
+
+
+                newSelection.addRange(
+                    newRange
+                );
+
+            }
+
+        }
+
+
+        scheduleNoteAutoSave();
+
+    }
+
+}
+
+
+
+
+// ============================================================
+// 启动
+// ============================================================
+
+
+window.onload=
+async()=>{
+
+    if(
+        "serviceWorker"
+        in navigator
+    ){
+
+        navigator.serviceWorker.register(
+            "service-worker.js"
+        );
+
+    }
+
+
+    if(window.SecurityManager){
+
+        SecurityManager.start();
+
+    }
+
+
+    if(window.NotesManager){
+
+        await NotesManager.loadNotes();
+
+    }
+
+
+    /*
+     * 初始化页码。
+     */
+    currentNotePageIndex =
+        -1;
+
+
+    updateNotePageInfo();
+
+};

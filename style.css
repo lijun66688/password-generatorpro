@@ -906,15 +906,10 @@ opacity:.6;
 }
 
 
-/* 编辑器焦点 */
 
 .note-editor:focus{
-
-    box-shadow:
-
-        inset 0 0 0 2px
-        rgba(59,130,246,.12);
-
+    outline:none !important;
+    box-shadow:none !important;
 }
 
 
@@ -1600,8 +1595,6 @@ input[type="checkbox"]{
 
 }
 
-
-
 /* =========================
    iPhone 8 / 小屏幕优化
 ========================= */
@@ -1956,3 +1949,174 @@ input[type="checkbox"]{
 
 }
 
+/* =========================
+   清单文字：完全无边框
+========================= */
+
+#noteEditor .note-check-text{
+    display:inline-block;
+
+    flex:1;
+
+    min-width:20px;
+
+    padding:0;
+    margin:0;
+
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+
+    background:transparent !important;
+}
+
+
+/* 清单文字正在编辑 */
+#noteEditor .note-check-text:focus{
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+}
+
+
+/* Safari / iPhone */
+#noteEditor .note-check-text:focus-visible{
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+}
+
+
+/* 清单整行也不要边框 */
+#noteEditor .note-check-line{
+    display:flex;
+    align-items:center;
+
+    width:100%;
+    min-height:32px;
+
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+
+    background:transparent !important;
+}
+
+
+/* checkbox 自己也不要焦点框 */
+#noteEditor .note-check-line .note-checkbox{
+    flex:0 0 auto;
+
+    border:none !important;
+    outline:none !important;
+    box-shadow:none !important;
+}
+
+
+/* checkbox focus */
+#noteEditor .note-check-line .note-checkbox:focus{
+    outline:none !important;
+    box-shadow:none !important;
+}
+
+/* =========================
+   清单文字编辑区域
+========================= */
+
+#noteEditor .note-check-text{
+
+    display:inline-block;
+
+    min-width:20px;
+
+    flex:1;
+
+    outline:none !important;
+
+    border:none !important;
+
+    box-shadow:none !important;
+
+    background:transparent;
+
+    padding:0;
+
+    margin:0;
+
+}
+
+
+#noteEditor .note-check-text:focus{
+
+    outline:none !important;
+
+    border:none !important;
+
+    box-shadow:none !important;
+
+}
+
+
+#noteEditor .note-check-text:focus-visible{
+
+    outline:none !important;
+
+    border:none !important;
+
+    box-shadow:none !important;
+
+}
+
+
+/* 清单整行 */
+
+#noteEditor .note-check-line{
+
+    display:flex;
+
+    align-items:center;
+
+    width:100%;
+
+    min-height:32px;
+
+    border:none !important;
+
+    outline:none !important;
+
+    box-shadow:none !important;
+
+}
+
+
+/* checkbox 不参与文字焦点 */
+
+#noteEditor .note-check-line
+.note-checkbox{
+
+    flex:0 0 auto;
+
+    width:18px;
+
+    height:18px;
+
+    margin:0 8px 0 0;
+
+    padding:0;
+
+}
+
+
+/* iPhone */
+
+@media(max-width:768px){
+
+    #noteEditor .note-check-text{
+
+        font-size:16px;
+
+        line-height:1.8;
+
+    }
+
+}
