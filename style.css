@@ -2120,3 +2120,29 @@ input[type="checkbox"]{
     }
 
 }
+
+/* =========================
+   清单：checkbox 永远固定首行
+========================= */
+
+#noteEditor .note-check-line{
+    display:flex !important;
+    align-items:flex-start !important;
+    width:100%;
+    min-height:32px;
+}
+
+#noteEditor .note-check-line .note-checkbox{
+    flex:0 0 auto;
+    width:18px;
+    height:18px;
+    margin:3px 8px 0 0 !important;
+    padding:0;
+}
+
+#noteEditor .note-check-text{
+    flex:1;
+    min-width:0;
+    display:block;
+    line-height:1.8;
+}
