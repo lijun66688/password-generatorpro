@@ -2190,3 +2190,11 @@ input[type="checkbox"]{
     }
 
 }
+
+@media (max-width:390px){
+
+    #generatorPage .box:has(#upper) h3{
+        text-align:center;
+    }
+
+}
