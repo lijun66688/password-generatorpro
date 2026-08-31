@@ -2199,17 +2199,29 @@ input[type="checkbox"]{
 
 }
 
-/* ================================
-   全局防止双击缩放 / 页面跳动
-   ================================ */
+/* =========================
+   全局禁止页面缩放
+========================= */
 
 html,
-body {
+body{
+
     touch-action: manipulation;
+
+    -ms-touch-action: manipulation;
+
+    overscroll-behavior: none;
+
 }
 
-html,
-body {
+
+/* 防止输入框聚焦时 Safari 页面缩放 */
+
+input,
+select,
+textarea,
+button{
+
     touch-action: manipulation;
-    -webkit-text-size-adjust: 100%;
+
 }
