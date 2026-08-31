@@ -4940,3 +4940,33 @@ async()=>{
     updateNotePageInfo();
 
 };
+
+/* =========================
+   全局禁止 iPhone 双指缩放
+========================= */
+
+document.addEventListener(
+    "gesturestart",
+    function(e) {
+        e.preventDefault();
+    },
+    { passive: false }
+);
+
+document.addEventListener(
+    "gesturechange",
+    function(e) {
+        e.preventDefault();
+    },
+    { passive: false }
+);
+
+document.addEventListener(
+    "gestureend",
+    function(e) {
+        e.preventDefault();
+    },
+    { passive: false }
+);
+
+
