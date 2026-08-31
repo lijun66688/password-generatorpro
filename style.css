@@ -2136,7 +2136,7 @@ input[type="checkbox"]{
     flex:0 0 auto;
     width:18px;
     height:18px;
-    margin:-3px 8px 0 0 !important;
+    margin:7px 8px 0 0 !important;
     padding:0;
 }
 
@@ -2145,4 +2145,47 @@ input[type="checkbox"]{
     min-width:0;
     display:block;
     line-height:1.8;
+}
+
+/* =========================
+   生成密码 - 字符类型
+   iPhone 8 四列排列
+========================= */
+
+@media (max-width:390px){
+
+    #generatorPage .box:has(#upper) > label{
+
+        display:inline-flex;
+
+        flex-direction:column;
+
+        align-items:center;
+
+        justify-content:flex-start;
+
+        width:24%;
+
+        margin:0;
+
+        padding:0;
+
+        text-align:center;
+
+        font-size:13px;
+
+        line-height:1.4;
+
+    }
+
+    #generatorPage .box:has(#upper) > label input[type="checkbox"]{
+
+        width:18px;
+
+        height:18px;
+
+        margin:6px 0 0 0;
+
+    }
+
 }
