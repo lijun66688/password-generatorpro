@@ -30,6 +30,8 @@ let noteEditMode = false;
 // 自动保存计时器
 let noteAutoSaveTimer = null;
 
+let noteSaveInProgress = false;
+
 
 const $ = id =>
 document.getElementById(id);
@@ -2927,12 +2929,12 @@ if($("deleteCurrentNote")){
 
 
 if($("saveNote")){
+    $("saveNote").onclick = async()=>{
+        if(noteSaveInProgress) return;
+        noteSaveInProgress = true;
 
-    $("saveNote")
-    .onclick=
-    async()=>{
-
-        let data={
+        try{
+            let data = {
 
             title:
                 $("noteTitle")
@@ -3162,22 +3164,14 @@ if($("saveNote")){
          * 但如果刚刚保存的是新笔记，
          * 当前页面仍然记录为这条历史笔记。
          */
-        $("noteTitle").value="";
+       $("noteTitle").value="";
+       $("noteTags").value="";
+       $("noteEditor").innerHTML="";
 
-        $("noteTags").value="";
-
-        $("noteEditor").innerHTML="";
-
-
-        /*
-         * 保存完成以后，
-         * editingNoteId 保留当前笔记 ID。
-         *
-         * 这样页面导航仍然知道
-         * 当前是哪一页。
-         */
+        } finally {
+            noteSaveInProgress = false;
+        }
     };
-
 }
 
 
