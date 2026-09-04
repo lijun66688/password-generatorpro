@@ -4969,4 +4969,28 @@ document.addEventListener(
     { passive: false }
 );
 
+async function checkNoteDuplicates(){
+
+    await NotesManager.loadNotes();
+
+    const notes =
+        NotesManager.getNotes() || [];
+
+    let result =
+        "笔记总数：" + notes.length + "\n\n";
+
+    notes.forEach((note,index)=>{
+
+        result +=
+            (index + 1) +
+            ". ID=" +
+            note.id +
+            "  标题=" +
+            (note.title || "无标题") +
+            "\n";
+
+    });
+
+    alert(result);
+}
 
