@@ -5,7 +5,7 @@
 
 
 const CACHE_NAME =
-"secure-vault-v3";
+"secure-vault-v4";
 
 
 
