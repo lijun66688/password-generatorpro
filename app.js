@@ -2188,6 +2188,14 @@ async function openHistoryNote(note){
 
 
 function openNoteEditor(note = null){
+    
+    const titleBox = $("noteTitle")?.closest(".box");
+    const editorBox = $("noteEditor")?.closest(".box");
+    const buttons = $("saveNote")?.closest(".btns");
+
+    if(titleBox) titleBox.style.display = "";
+    if(editorBox) editorBox.style.display = "";
+    if(buttons) buttons.style.display = "";
 
     noteEditMode =
         true;
@@ -3244,69 +3252,31 @@ if($("clearNote")){
 
 async function closeNoteEditor(){
 
-    noteEditMode =
-        false;
+    noteEditMode = false;
+    editingNoteId = null;
+    currentNotePageIndex = -1;
 
+    const header = $("noteEditorHeader");
+    if(header) header.style.display = "none";
 
-    /*
-     * 当前不再处于某条历史笔记的编辑状态。
-     */
-    editingNoteId =
-        null;
+    const titleBox = $("noteTitle")?.closest(".box");
+    const editorBox = $("noteEditor")?.closest(".box");
+    const buttons = $("saveNote")?.closest(".btns");
 
+    if(titleBox) titleBox.style.display = "none";
+    if(editorBox) editorBox.style.display = "none";
+    if(buttons) buttons.style.display = "none";
 
-    currentNotePageIndex =
-        -1;
+    const searchBox = $("noteSearch")?.closest(".box");
+    const categories = $("noteCategories")?.closest(".box");
+    const list = $("notesList");
 
-
-    const header =
-        $("noteEditorHeader");
-
-
-    if(header){
-
-        header.style.display =
-            "none";
-
-    }
-
-
-    const searchBox =
-        $("noteSearch")
-        ?.closest(".box");
-
-
-    const categories =
-        $("noteCategories")
-        ?.closest(".box");
-
-
-    const list =
-        $("notesList");
-
-
-    if(searchBox)
-
-        searchBox.style.display =
-            "";
-
-
-    if(categories)
-
-        categories.style.display =
-            "";
-
-
-    if(list)
-
-        list.style.display =
-            "";
-
+    if(searchBox) searchBox.style.display = "";
+    if(categories) categories.style.display = "";
+    if(list) list.style.display = "";
 
     await renderNotes();
-
 }
-
 
 if($("backToNotes")){
 
