@@ -1634,8 +1634,8 @@ notes = uniqueNotes;
 
                     ${
                         note.favorite
-                        ? "⭐"
-                        : "⭐"
+                        ? "⭐ 收藏"
+                        : "⭐ 取消收藏"
                     }
 
                 </button>
