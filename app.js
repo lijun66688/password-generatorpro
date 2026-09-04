@@ -1635,7 +1635,7 @@ notes = uniqueNotes;
                     ${
                         note.favorite
                         ? "⭐"
-                        : "☆"
+                        : "⭐"
                     }
 
                 </button>
