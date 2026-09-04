@@ -3279,14 +3279,59 @@ async function closeNoteEditor(){
 }
 
 if($("backToNotes")){
+    $("backToNotes").onclick = async()=>{
 
-    $("backToNotes").onclick =
-        async()=>{
+        const title = $("noteTitle")?.value.trim();
+        const content = $("noteEditor")?.innerHTML;
+        const tags = $("noteTags")?.value.trim();
 
+        // 新建笔记时，如果什么都没写，直接返回
+        if(!editingNoteId && !title && !content && !tags){
             await closeNoteEditor();
+            return;
+        }
 
-        };
+        // 有内容时询问
+        if(title || content || tags){
 
+            const save = confirm("笔记有修改，是否保存？");
+
+            if(!save){
+                return;
+            }
+
+            // 已有笔记 → 保存修改
+            if(editingNoteId){
+
+                await NotesManager.updateNote(editingNoteId,{
+                    title: title,
+                    content: content,
+                    category: $("noteCategory").value,
+                    tags: $("noteTags").value
+                        .split(",")
+                        .map(x=>x.trim())
+                        .filter(x=>x),
+                    todo:[]
+                });
+
+            }else{
+
+                // 新笔记 → 保存
+                await NotesManager.createNote({
+                    title: title,
+                    content: content,
+                    category: $("noteCategory").value,
+                    tags: $("noteTags").value
+                        .split(",")
+                        .map(x=>x.trim())
+                        .filter(x=>x),
+                    todo:[]
+                });
+            }
+        }
+
+        await closeNoteEditor();
+    };
 }
 
 
