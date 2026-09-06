@@ -136,123 +136,90 @@ if($("insertNoteTime")){
 // 不影响 B / I / U
 // ============================================================
 // ============================================================
+// ===========================================
 // ============================================================
 // 笔记文字背景色 / 高亮
-// 固定黄色
-// 支持任意选区增加 / 取消
-// 不影响 B / I / U
+// 固定黄色：#fff59d
+// 不修改 B / I / U
 // ============================================================
 
 if($("textBgColorBtn")){
 
     const bgColorButton = $("textBgColorBtn");
-
-    // 默认黄色
     const HIGHLIGHT_COLOR = "#fff59d";
 
 
     // ========================================================
-    // 保存当前选区
+    // 判断是不是我们的高亮
     // ========================================================
 
-    bgColorButton.addEventListener("mousedown", e => {
-
-        e.preventDefault();
-
-        const editor = $("noteEditor");
-
-        if(!editor) return;
-
-        const selection = window.getSelection();
+    function isHighlightElement(element){
 
         if(
-            selection &&
-            selection.rangeCount
+            !element ||
+            element.nodeType !== Node.ELEMENT_NODE
         ){
-
-            const range =
-                selection.getRangeAt(0);
-
-            if(
-                editor.contains(
-                    range.commonAncestorContainer
-                )
-            ){
-
-                bgColorButton._savedRange =
-                    range.cloneRange();
-
-            }
-
+            return false;
         }
 
-    });
-
-
-    // ========================================================
-    // 获取当前选区
-    // ========================================================
-
-    function restoreHighlightSelection(){
-
-        const editor = $("noteEditor");
-
-        if(
-            !editor ||
-            !bgColorButton._savedRange
-        ){
-
-            return null;
-
-        }
-
-
-        editor.focus();
-
-        const selection =
-            window.getSelection();
-
-
-        selection.removeAllRanges();
-
-        selection.addRange(
-            bgColorButton._savedRange
+        return (
+            element.tagName === "MARK" &&
+            element.dataset.noteHighlight === "true"
         );
-
-
-        return selection.getRangeAt(0);
 
     }
 
 
     // ========================================================
-    // 判断当前选区是否存在黄色背景
+    // 判断文字节点是否在高亮中
     // ========================================================
 
-    function selectionHasYellow(range){
+    function getHighlightParent(node){
 
-        if(!range){
-            return false;
+        let element =
+            node && node.nodeType === Node.TEXT_NODE
+                ? node.parentElement
+                : node;
+
+        while(element){
+
+            if(isHighlightElement(element)){
+                return element;
+            }
+
+            if(element.id === "noteEditor"){
+                break;
+            }
+
+            element = element.parentElement;
+
         }
 
+        return null;
 
-        const editor =
-            $("noteEditor");
+    }
 
-        if(!editor){
-            return false;
+
+    // ========================================================
+    // 获取选区中的文字节点
+    // ========================================================
+
+    function getSelectedTextNodes(range, editor){
+
+        const result = [];
+
+        if(!range || !editor){
+            return result;
         }
-
 
         const walker =
             document.createTreeWalker(
                 editor,
-                NodeFilter.SHOW_TEXT
+                NodeFilter.SHOW_TEXT,
+                null
             );
 
-
         let node;
-
 
         while(node = walker.nextNode()){
 
@@ -260,171 +227,644 @@ if($("textBgColorBtn")){
                 continue;
             }
 
-
             try{
 
-                if(!range.intersectsNode(node)){
-                    continue;
+                if(range.intersectsNode(node)){
+
+                    result.push(node);
+
                 }
 
             }catch(e){
 
-                continue;
-
-            }
-
-
-            let element =
-                node.parentElement;
-
-
-            while(
-                element &&
-                element !== editor
-            ){
-
-                const bg =
-                    window.getComputedStyle(
-                        element
-                    ).backgroundColor;
-
-
-                if(
-                    bg === "rgb(255, 245, 157)" ||
-                    bg === "rgba(255, 245, 157, 1)"
-                ){
-
-                    return true;
-
-                }
-
-
-                element =
-                    element.parentElement;
+                // 忽略无效节点
 
             }
 
         }
 
-
-        return false;
+        return result;
 
     }
 
 
     // ========================================================
-    // 点击高亮按钮
+    // 判断当前选区有没有真正的文字
     // ========================================================
 
-    bgColorButton.addEventListener("click", () => {
+    function selectionHasText(range){
 
-        const editor =
-            $("noteEditor");
+        if(!range || range.collapsed){
+            return false;
+        }
 
+        const text =
+            range.toString();
+
+        return text.length > 0;
+
+    }
+
+
+    // ========================================================
+    // 给一个文字节点增加高亮
+    // ========================================================
+
+    function wrapTextNode(node){
+
+        if(
+            !node ||
+            node.nodeType !== Node.TEXT_NODE ||
+            !node.nodeValue
+        ){
+            return false;
+        }
+
+        // 已经高亮，不重复处理
+        if(getHighlightParent(node)){
+            return false;
+        }
+
+        const mark =
+            document.createElement("mark");
+
+        mark.dataset.noteHighlight = "true";
+
+        mark.style.backgroundColor =
+            HIGHLIGHT_COLOR;
+
+        mark.style.color =
+            "inherit";
+
+        mark.style.padding =
+            "0";
+
+        mark.style.borderRadius =
+            "2px";
+
+
+        node.parentNode.insertBefore(
+            mark,
+            node
+        );
+
+        mark.appendChild(node);
+
+        return true;
+
+    }
+
+
+    // ========================================================
+    // 把一个高亮节点拆开
+    // 只移除指定文字
+    // ========================================================
+
+    function removeHighlightFromTextNode(
+        node,
+        start,
+        end
+    ){
+
+        if(
+            !node ||
+            node.nodeType !== Node.TEXT_NODE
+        ){
+            return false;
+        }
+
+        const mark =
+            getHighlightParent(node);
+
+        if(!mark){
+            return false;
+        }
+
+
+        const length =
+            node.nodeValue.length;
+
+
+        start =
+            Math.max(
+                0,
+                Math.min(start, length)
+            );
+
+        end =
+            Math.max(
+                0,
+                Math.min(end, length)
+            );
+
+
+        if(start >= end){
+            return false;
+        }
+
+
+        // ====================================================
+        // 先从后面切
+        // ====================================================
+
+        let selectedNode = node;
+
+        let afterNode = null;
+
+
+        if(end < selectedNode.nodeValue.length){
+
+            afterNode =
+                selectedNode.splitText(end);
+
+        }
+
+
+        // ====================================================
+        // 再从前面切
+        // ====================================================
+
+        if(start > 0){
+
+            selectedNode =
+                selectedNode.splitText(start);
+
+        }
+
+
+        // ====================================================
+        // selectedNode 就是需要取消高亮的文字
+        // ====================================================
+
+        const parent =
+            mark.parentNode;
+
+
+        if(!parent){
+            return false;
+        }
+
+
+        parent.insertBefore(
+            selectedNode,
+            mark
+        );
+
+
+        // ====================================================
+        // 如果 mark 已经没有文字
+        // ====================================================
+
+        if(!mark.textContent){
+
+            mark.remove();
+
+        }
+
+
+        return true;
+
+    }
+
+
+    // ========================================================
+    // 合并相邻高亮
+    // ========================================================
+
+    function mergeHighlightElements(editor){
 
         if(!editor){
             return;
         }
 
 
-        const range =
-            restoreHighlightSelection();
-
-
-        if(!range){
-            return;
-        }
-
-
-        // 没有选择文字
-        if(range.collapsed){
-
-            return;
-
-        }
-
-
-        // ====================================================
-        // 判断当前选区
-        // ====================================================
-
-        const hasYellow =
-            selectionHasYellow(range);
-
-
-        // ====================================================
-        // 已经有黄色
-        // → 取消黄色
-        //
-        // 没有黄色
-        // → 增加黄色
-        // ====================================================
-
-        if(hasYellow){
-
-            /*
-             * transparent 只处理背景色，
-             * 不使用 removeFormat，
-             * 因此不会主动删除 B / I / U。
-             */
-
-            document.execCommand(
-                "hiliteColor",
-                false,
-                "transparent"
+        const marks =
+            Array.from(
+                editor.querySelectorAll(
+                    'mark[data-note-highlight="true"]'
+                )
             );
 
 
-            bgColorButton.classList.remove(
-                "active"
-            );
+        marks.forEach(mark => {
 
-        }else{
-
-            document.execCommand(
-                "hiliteColor",
-                false,
-                HIGHLIGHT_COLOR
-            );
+            let next =
+                mark.nextSibling;
 
 
-            bgColorButton.classList.add(
-                "active"
-            );
+            // 删除空文字节点
+            while(
+                next &&
+                next.nodeType === Node.TEXT_NODE &&
+                next.nodeValue === ""
+            ){
 
-        }
+                const empty =
+                    next;
 
+                next =
+                    next.nextSibling;
 
-        // ====================================================
-        // 标记笔记已经修改
-        // ====================================================
+                empty.remove();
 
-        if(
-            typeof noteHasChanges !== "undefined"
-        ){
-
-            noteHasChanges = true;
-
-        }
+            }
 
 
-        // ====================================================
-        // 自动保存
-        // ====================================================
+            // ==================================================
+            // 两个相邻 mark 合并
+            // ==================================================
 
-        if(
-            typeof scheduleNoteAutoSave === "function"
-        ){
+            if(
+                next &&
+                next.nodeType === Node.ELEMENT_NODE &&
+                isHighlightElement(next)
+            ){
 
-            scheduleNoteAutoSave();
+                while(next.firstChild){
 
-        }
+                    mark.appendChild(
+                        next.firstChild
+                    );
 
-    });
+                }
+
+                next.remove();
+
+            }
+
+        });
+
+    }
 
 
     // ========================================================
-    // 根据光标 / 选区同步按钮状态
+    // 添加高亮
+    // ========================================================
+
+    function applyHighlight(range, editor){
+
+        const nodes =
+            getSelectedTextNodes(
+                range,
+                editor
+            );
+
+        if(!nodes.length){
+            return false;
+        }
+
+
+        let changed = false;
+
+
+        /*
+         * 非常重要：
+         *
+         * 从后往前处理文字节点。
+         *
+         * 这样 splitText() 不会影响
+         * 前面节点的 Range。
+         */
+
+        for(
+            let i = nodes.length - 1;
+            i >= 0;
+            i--
+        ){
+
+            const originalNode =
+                nodes[i];
+
+
+            if(
+                !originalNode.parentNode ||
+                !editor.contains(originalNode)
+            ){
+                continue;
+            }
+
+
+            let start = 0;
+            let end =
+                originalNode.nodeValue.length;
+
+
+            // ==================================================
+            // 当前文字节点的选区开始位置
+            // ==================================================
+
+            if(
+                originalNode ===
+                range.startContainer
+            ){
+
+                start =
+                    range.startOffset;
+
+            }
+
+
+            // ==================================================
+            // 当前文字节点的选区结束位置
+            // ==================================================
+
+            if(
+                originalNode ===
+                range.endContainer
+            ){
+
+                end =
+                    range.endOffset;
+
+            }
+
+
+            if(start >= end){
+                continue;
+            }
+
+
+            let targetNode =
+                originalNode;
+
+
+            // ==================================================
+            // 从后面切
+            // ==================================================
+
+            if(
+                end <
+                targetNode.nodeValue.length
+            ){
+
+                targetNode =
+                    targetNode.splitText(end);
+
+                /*
+                 * splitText(end) 后，
+                 * targetNode 是前半段。
+                 */
+
+            }
+
+
+            // ==================================================
+            // 从前面切
+            // ==================================================
+
+            if(start > 0){
+
+                targetNode =
+                    targetNode.splitText(start);
+
+            }
+
+
+            // ==================================================
+            // 如果这一段还没有高亮
+            // ==================================================
+
+            if(
+                !getHighlightParent(
+                    targetNode
+                )
+            ){
+
+                if(
+                    wrapTextNode(
+                        targetNode
+                    )
+                ){
+
+                    changed = true;
+
+                }
+
+            }
+
+        }
+
+
+        mergeHighlightElements(editor);
+
+        return changed;
+
+    }
+
+
+    // ========================================================
+    // 取消高亮
+    // ========================================================
+
+    function removeHighlight(range, editor){
+
+        const nodes =
+            getSelectedTextNodes(
+                range,
+                editor
+            );
+
+        if(!nodes.length){
+            return false;
+        }
+
+
+        let changed = false;
+
+
+        /*
+         * 同样从后往前处理。
+         */
+
+        for(
+            let i = nodes.length - 1;
+            i >= 0;
+            i--
+        ){
+
+            const originalNode =
+                nodes[i];
+
+
+            if(
+                !originalNode.parentNode ||
+                !editor.contains(originalNode)
+            ){
+                continue;
+            }
+
+
+            if(
+                !getHighlightParent(
+                    originalNode
+                )
+            ){
+                continue;
+            }
+
+
+            let start = 0;
+
+            let end =
+                originalNode.nodeValue.length;
+
+
+            if(
+                originalNode ===
+                range.startContainer
+            ){
+
+                start =
+                    range.startOffset;
+
+            }
+
+
+            if(
+                originalNode ===
+                range.endContainer
+            ){
+
+                end =
+                    range.endOffset;
+
+            }
+
+
+            if(start >= end){
+                continue;
+            }
+
+
+            if(
+                removeHighlightFromTextNode(
+                    originalNode,
+                    start,
+                    end
+                )
+            ){
+
+                changed = true;
+
+            }
+
+        }
+
+
+        mergeHighlightElements(editor);
+
+        return changed;
+
+    }
+
+
+    // ========================================================
+    // 当前选区是否全部已经高亮
+    // ========================================================
+
+    function selectionFullyHighlighted(
+        range,
+        editor
+    ){
+
+        if(!range){
+            return false;
+        }
+
+
+        if(range.collapsed){
+
+            let node =
+                range.startContainer;
+
+
+            if(
+                node.nodeType === Node.TEXT_NODE
+            ){
+
+                return !!getHighlightParent(node);
+
+            }
+
+
+            return false;
+
+        }
+
+
+        const nodes =
+            getSelectedTextNodes(
+                range,
+                editor
+            );
+
+
+        let hasRealText = false;
+
+
+        for(const node of nodes){
+
+            let start = 0;
+
+            let end =
+                node.nodeValue.length;
+
+
+            if(
+                node ===
+                range.startContainer
+            ){
+
+                start =
+                    range.startOffset;
+
+            }
+
+
+            if(
+                node ===
+                range.endContainer
+            ){
+
+                end =
+                    range.endOffset;
+
+            }
+
+
+            const selectedText =
+                node.nodeValue.substring(
+                    start,
+                    end
+                );
+
+
+            if(!selectedText.trim()){
+                continue;
+            }
+
+
+            hasRealText = true;
+
+
+            if(
+                !getHighlightParent(node)
+            ){
+
+                return false;
+
+            }
+
+        }
+
+
+        return hasRealText;
+
+    }
+
+
+    // ========================================================
+    // 更新按钮 active
     // ========================================================
 
     function updateHighlightButton(){
@@ -475,7 +915,10 @@ if($("textBgColorBtn")){
 
 
         if(
-            selectionHasYellow(range)
+            selectionFullyHighlighted(
+                range,
+                editor
+            )
         ){
 
             bgColorButton.classList.add(
@@ -494,14 +937,233 @@ if($("textBgColorBtn")){
 
 
     // ========================================================
-    // 监听光标 / 选区变化
+    // 点击按钮之前保存选区
+    // ========================================================
+
+    bgColorButton.addEventListener(
+        "mousedown",
+        function(e){
+
+            e.preventDefault();
+
+
+            const editor =
+                $("noteEditor");
+
+            if(!editor){
+                return;
+            }
+
+
+            const selection =
+                window.getSelection();
+
+
+            if(
+                !selection ||
+                !selection.rangeCount
+            ){
+                return;
+            }
+
+
+            const range =
+                selection.getRangeAt(0);
+
+
+            if(
+                editor.contains(
+                    range.commonAncestorContainer
+                )
+            ){
+
+                bgColorButton._savedRange =
+                    range.cloneRange();
+
+            }
+
+        }
+    );
+
+
+    // ========================================================
+    // 点击高亮按钮
+    // ========================================================
+
+    bgColorButton.addEventListener(
+        "click",
+        function(){
+
+            const editor =
+                $("noteEditor");
+
+
+            if(
+                !editor ||
+                !bgColorButton._savedRange
+            ){
+                return;
+            }
+
+
+            const range =
+                bgColorButton._savedRange;
+
+
+            if(!selectionHasText(range)){
+
+                bgColorButton._savedRange =
+                    null;
+
+                return;
+
+            }
+
+
+            // ==================================================
+            // 恢复原来的选区
+            // ==================================================
+
+            editor.focus();
+
+
+            const selection =
+                window.getSelection();
+
+
+            selection.removeAllRanges();
+
+            selection.addRange(
+                range
+            );
+
+
+            // ==================================================
+            // 如果整段已经高亮
+            // → 取消
+            //
+            // 否则
+            // → 增加黄色高亮
+            // ==================================================
+
+            const alreadyHighlighted =
+                selectionFullyHighlighted(
+                    range,
+                    editor
+                );
+
+
+            let changed = false;
+
+
+            if(alreadyHighlighted){
+
+                changed =
+                    removeHighlight(
+                        range,
+                        editor
+                    );
+
+            }else{
+
+                changed =
+                    applyHighlight(
+                        range,
+                        editor
+                    );
+
+            }
+
+
+            // ==================================================
+            // 更新按钮
+            // ==================================================
+
+            updateHighlightButton();
+
+
+            // ==================================================
+            // 修改状态
+            // ==================================================
+
+            if(
+                changed &&
+                typeof noteHasChanges !== "undefined"
+            ){
+
+                noteHasChanges = true;
+
+            }
+
+
+            // ==================================================
+            // 自动保存
+            // ==================================================
+
+            if(
+                changed &&
+                typeof scheduleNoteAutoSave === "function"
+            ){
+
+                scheduleNoteAutoSave();
+
+            }
+
+
+            bgColorButton._savedRange =
+                null;
+
+        }
+    );
+
+
+    // ========================================================
+    // 选区改变
     // ========================================================
 
     document.addEventListener(
         "selectionchange",
-        () => {
+        function(){
 
-            updateHighlightButton();
+            const editor =
+                $("noteEditor");
+
+            if(!editor){
+                return;
+            }
+
+
+            const selection =
+                window.getSelection();
+
+
+            if(
+                !selection ||
+                !selection.rangeCount
+            ){
+
+                bgColorButton.classList.remove(
+                    "active"
+                );
+
+                return;
+
+            }
+
+
+            const range =
+                selection.getRangeAt(0);
+
+
+            if(
+                editor.contains(
+                    range.commonAncestorContainer
+                )
+            ){
+
+                updateHighlightButton();
+
+            }
 
         }
     );
