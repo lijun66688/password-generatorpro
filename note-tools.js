@@ -136,8 +136,10 @@ if($("insertNoteTime")){
 // 不影响 B / I / U
 // ============================================================
 // ============================================================
+// ============================================================
 // 笔记文字背景色 / 高亮
-// Word 风格：任意选区增加 / 取消黄色高亮
+// 固定黄色
+// 支持任意选区增加 / 取消
 // 不影响 B / I / U
 // ============================================================
 
@@ -145,74 +147,92 @@ if($("textBgColorBtn")){
 
     const bgColorButton = $("textBgColorBtn");
 
-    // 固定黄色
+    // 默认黄色
     const HIGHLIGHT_COLOR = "#fff59d";
 
 
     // ========================================================
-    // 判断是不是我们的高亮元素
+    // 保存当前选区
     // ========================================================
 
-    function isHighlightElement(element){
+    bgColorButton.addEventListener("mousedown", e => {
 
-        return !!(
-            element &&
-            element.nodeType === Node.ELEMENT_NODE &&
-            element.matches &&
-            element.matches(
-                'span[data-note-highlight="true"]'
-            )
+        e.preventDefault();
+
+        const editor = $("noteEditor");
+
+        if(!editor) return;
+
+        const selection = window.getSelection();
+
+        if(
+            selection &&
+            selection.rangeCount
+        ){
+
+            const range =
+                selection.getRangeAt(0);
+
+            if(
+                editor.contains(
+                    range.commonAncestorContainer
+                )
+            ){
+
+                bgColorButton._savedRange =
+                    range.cloneRange();
+
+            }
+
+        }
+
+    });
+
+
+    // ========================================================
+    // 获取当前选区
+    // ========================================================
+
+    function restoreHighlightSelection(){
+
+        const editor = $("noteEditor");
+
+        if(
+            !editor ||
+            !bgColorButton._savedRange
+        ){
+
+            return null;
+
+        }
+
+
+        editor.focus();
+
+        const selection =
+            window.getSelection();
+
+
+        selection.removeAllRanges();
+
+        selection.addRange(
+            bgColorButton._savedRange
         );
 
-    }
 
-
-    // ========================================================
-    // 判断文字节点是否在高亮里面
-    // ========================================================
-
-    function isTextHighlighted(textNode){
-
-        if(!textNode){
-            return false;
-        }
-
-        let element =
-            textNode.nodeType === Node.TEXT_NODE
-                ? textNode.parentElement
-                : textNode;
-
-
-        while(element){
-
-            if(isHighlightElement(element)){
-                return true;
-            }
-
-            if(element.id === "noteEditor"){
-                break;
-            }
-
-            element =
-                element.parentElement;
-
-        }
-
-        return false;
+        return selection.getRangeAt(0);
 
     }
 
 
     // ========================================================
-    // 获取 Range 里面所有文字节点
+    // 判断当前选区是否存在黄色背景
     // ========================================================
 
-    function getTextNodesInRange(range){
-
-        const nodes = [];
+    function selectionHasYellow(range){
 
         if(!range){
-            return nodes;
+            return false;
         }
 
 
@@ -220,7 +240,7 @@ if($("textBgColorBtn")){
             $("noteEditor");
 
         if(!editor){
-            return nodes;
+            return false;
         }
 
 
@@ -243,565 +263,174 @@ if($("textBgColorBtn")){
 
             try{
 
-                if(range.intersectsNode(node)){
-
-                    nodes.push(node);
-
+                if(!range.intersectsNode(node)){
+                    continue;
                 }
 
-            }catch(error){
+            }catch(e){
 
-                // 某些 Safari 情况下忽略该节点
-            }
-
-        }
-
-
-        return nodes;
-
-    }
-
-
-    // ========================================================
-    // 判断当前选区是否全部都是黄色高亮
-    // ========================================================
-
-    function isEntireSelectionHighlighted(range){
-
-        const textNodes =
-            getTextNodesInRange(range);
-
-
-        if(!textNodes.length){
-            return false;
-        }
-
-
-        let hasRealText = false;
-
-
-        for(const node of textNodes){
-
-            let start = 0;
-            let end =
-                node.nodeValue.length;
-
-
-            if(node === range.startContainer){
-
-                start =
-                    range.startOffset;
+                continue;
 
             }
 
 
-            if(node === range.endContainer){
-
-                end =
-                    range.endOffset;
-
-            }
+            let element =
+                node.parentElement;
 
 
-            const selectedText =
-                node.nodeValue.substring(
-                    start,
-                    end
-                );
+            while(
+                element &&
+                element !== editor
+            ){
 
-
-            // 忽略纯空白
-            if(selectedText.trim()){
-
-                hasRealText = true;
-
-
-                if(!isTextHighlighted(node)){
-
-                    return false;
-
-                }
-
-            }
-
-        }
-
-
-        return hasRealText;
-
-    }
-
-
-    // ========================================================
-    // 取消 fragment 中所有我们的高亮标签
-    //
-    // 注意：
-    // 这里只删除高亮 span，
-    // 不删除 B / I / U
-    // ========================================================
-
-    function unwrapHighlights(fragment){
-
-        const marks =
-            Array.from(
-                fragment.querySelectorAll(
-                    'span[data-note-highlight="true"]'
-                )
-            );
-
-
-        marks.forEach(mark => {
-
-            const parent =
-                mark.parentNode;
-
-            if(!parent){
-                return;
-            }
-
-
-            while(mark.firstChild){
-
-                parent.insertBefore(
-                    mark.firstChild,
-                    mark
-                );
-
-            }
-
-
-            mark.remove();
-
-        });
-
-    }
-
-
-    // ========================================================
-    // 清理空的高亮标签
-    // ========================================================
-
-    function removeEmptyHighlights(editor){
-
-        const marks =
-            Array.from(
-                editor.querySelectorAll(
-                    'span[data-note-highlight="true"]'
-                )
-            );
-
-
-        marks.forEach(mark => {
-
-            if(!mark.textContent){
-
-                mark.remove();
-
-            }
-
-        });
-
-    }
-
-
-    // ========================================================
-    // 合并相邻高亮
-    // ========================================================
-
-    function mergeAdjacentHighlights(editor){
-
-        if(!editor){
-            return;
-        }
-
-
-        let changed = true;
-
-
-        while(changed){
-
-            changed = false;
-
-
-            const marks =
-                Array.from(
-                    editor.querySelectorAll(
-                        'span[data-note-highlight="true"]'
-                    )
-                );
-
-
-            for(const mark of marks){
-
-                const next =
-                    mark.nextSibling;
+                const bg =
+                    window.getComputedStyle(
+                        element
+                    ).backgroundColor;
 
 
                 if(
-                    next &&
-                    next.nodeType === Node.ELEMENT_NODE &&
-                    isHighlightElement(next)
+                    bg === "rgb(255, 245, 157)" ||
+                    bg === "rgba(255, 245, 157, 1)"
                 ){
 
-                    while(next.firstChild){
-
-                        mark.appendChild(
-                            next.firstChild
-                        );
-
-                    }
-
-
-                    next.remove();
-
-                    changed = true;
-
-                    break;
+                    return true;
 
                 }
 
+
+                element =
+                    element.parentElement;
+
             }
 
         }
+
+
+        return false;
 
     }
-
-
-    // ========================================================
-    // 给当前 Range 增加黄色高亮
-    //
-    // 使用 extractContents：
-    // 可以正确处理跨段落、跨 B/I/U 的选择
-    // ========================================================
-
-    function applyHighlight(range, editor){
-
-        const fragment =
-            range.extractContents();
-
-
-        if(!fragment.textContent){
-
-            // 没有文字，恢复内容
-            range.insertNode(fragment);
-
-            return false;
-
-        }
-
-
-        // 如果原来的选择里面已经有高亮，
-        // 先解除旧的高亮，避免产生高亮套高亮
-        unwrapHighlights(fragment);
-
-
-        const highlight =
-            document.createElement("span");
-
-
-        highlight.setAttribute(
-            "data-note-highlight",
-            "true"
-        );
-
-
-        highlight.style.backgroundColor =
-            HIGHLIGHT_COLOR;
-
-
-        highlight.style.color =
-            "inherit";
-
-
-        highlight.appendChild(
-            fragment
-        );
-
-
-        range.insertNode(
-            highlight
-        );
-
-
-        // ====================================================
-        // 恢复选择区域
-        // ====================================================
-
-        const newRange =
-            document.createRange();
-
-
-        newRange.selectNodeContents(
-            highlight
-        );
-
-
-        const selection =
-            window.getSelection();
-
-
-        selection.removeAllRanges();
-
-        selection.addRange(
-            newRange
-        );
-
-
-        mergeAdjacentHighlights(editor);
-
-
-        return true;
-
-    }
-
-
-    // ========================================================
-    // 取消当前 Range 的黄色高亮
-    //
-    // 只取消当前选中的部分
-    // 不影响 B / I / U
-    // ========================================================
-
-    function removeHighlight(range, editor){
-
-        const fragment =
-            range.extractContents();
-
-
-        if(!fragment.textContent){
-
-            range.insertNode(fragment);
-
-            return false;
-
-        }
-
-
-        // ====================================================
-        // 只移除高亮 span
-        // B / I / U 等其他标签全部保留
-        // ====================================================
-
-        unwrapHighlights(fragment);
-
-
-        range.insertNode(
-            fragment
-        );
-
-
-        // ====================================================
-        // 清理空标签
-        // ====================================================
-
-        removeEmptyHighlights(editor);
-
-
-        mergeAdjacentHighlights(editor);
-
-
-        return true;
-
-    }
-
-
-    // ========================================================
-    // 保存按钮点击之前的选区
-    // ========================================================
-
-    bgColorButton.addEventListener(
-        "mousedown",
-        e => {
-
-            e.preventDefault();
-
-
-            const editor =
-                $("noteEditor");
-
-
-            if(!editor){
-                return;
-            }
-
-
-            const selection =
-                window.getSelection();
-
-
-            if(
-                !selection ||
-                !selection.rangeCount
-            ){
-
-                return;
-
-            }
-
-
-            const range =
-                selection.getRangeAt(0);
-
-
-            if(
-                editor.contains(
-                    range.commonAncestorContainer
-                )
-            ){
-
-                bgColorButton._savedRange =
-                    range.cloneRange();
-
-            }
-
-        }
-    );
 
 
     // ========================================================
     // 点击高亮按钮
     // ========================================================
 
-    bgColorButton.addEventListener(
-        "click",
-        () => {
+    bgColorButton.addEventListener("click", () => {
 
-            const editor =
-                $("noteEditor");
+        const editor =
+            $("noteEditor");
 
 
-            if(
-                !editor ||
-                !bgColorButton._savedRange
-            ){
-
-                return;
-
-            }
+        if(!editor){
+            return;
+        }
 
 
-            // ==================================================
-            // 恢复原来的选区
-            // ==================================================
-
-            editor.focus();
+        const range =
+            restoreHighlightSelection();
 
 
-            const selection =
-                window.getSelection();
+        if(!range){
+            return;
+        }
 
 
-            selection.removeAllRanges();
+        // 没有选择文字
+        if(range.collapsed){
+
+            return;
+
+        }
 
 
-            selection.addRange(
-                bgColorButton._savedRange
+        // ====================================================
+        // 判断当前选区
+        // ====================================================
+
+        const hasYellow =
+            selectionHasYellow(range);
+
+
+        // ====================================================
+        // 已经有黄色
+        // → 取消黄色
+        //
+        // 没有黄色
+        // → 增加黄色
+        // ====================================================
+
+        if(hasYellow){
+
+            /*
+             * transparent 只处理背景色，
+             * 不使用 removeFormat，
+             * 因此不会主动删除 B / I / U。
+             */
+
+            document.execCommand(
+                "hiliteColor",
+                false,
+                "transparent"
             );
 
 
-            const range =
-                selection.getRangeAt(0);
+            bgColorButton.classList.remove(
+                "active"
+            );
+
+        }else{
+
+            document.execCommand(
+                "hiliteColor",
+                false,
+                HIGHLIGHT_COLOR
+            );
 
 
-            // 没有选择文字
-            if(range.collapsed){
-
-                return;
-
-            }
-
-
-            // ==================================================
-            // 如果整个选择区域都是黄色
-            // → 取消黄色
-            //
-            // 否则
-            // → 整个选择区域增加黄色
-            // ==================================================
-
-            const allHighlighted =
-                isEntireSelectionHighlighted(
-                    range
-                );
-
-
-            let changed = false;
-
-
-            if(allHighlighted){
-
-                changed =
-                    removeHighlight(
-                        range,
-                        editor
-                    );
-
-            }else{
-
-                changed =
-                    applyHighlight(
-                        range,
-                        editor
-                    );
-
-            }
-
-
-            // ==================================================
-            // 更新按钮状态
-            // ==================================================
-
-            updateHighlightButton();
-
-
-            // ==================================================
-            // 标记笔记已经修改
-            // ==================================================
-
-            if(
-                changed &&
-                typeof noteHasChanges !== "undefined"
-            ){
-
-                noteHasChanges = true;
-
-            }
-
-
-            // ==================================================
-            // 自动保存
-            // ==================================================
-
-            if(
-                changed &&
-                typeof scheduleNoteAutoSave === "function"
-            ){
-
-                scheduleNoteAutoSave();
-
-            }
-
-
-            // ==================================================
-            // 清除旧 Range
-            // ==================================================
-
-            bgColorButton._savedRange =
-                null;
+            bgColorButton.classList.add(
+                "active"
+            );
 
         }
-    );
+
+
+        // ====================================================
+        // 标记笔记已经修改
+        // ====================================================
+
+        if(
+            typeof noteHasChanges !== "undefined"
+        ){
+
+            noteHasChanges = true;
+
+        }
+
+
+        // ====================================================
+        // 自动保存
+        // ====================================================
+
+        if(
+            typeof scheduleNoteAutoSave === "function"
+        ){
+
+            scheduleNoteAutoSave();
+
+        }
+
+    });
 
 
     // ========================================================
-    // 根据当前光标 / 选区更新按钮状态
+    // 根据光标 / 选区同步按钮状态
     // ========================================================
 
     function updateHighlightButton(){
 
         const editor =
             $("noteEditor");
-
 
         if(!editor){
             return;
@@ -845,76 +474,8 @@ if($("textBgColorBtn")){
         }
 
 
-        // 光标没有选择文字：
-        // 判断光标所在文字是否高亮
-        if(range.collapsed){
-
-            let node =
-                range.startContainer;
-
-
-            if(
-                node.nodeType === Node.TEXT_NODE
-            ){
-
-                if(isTextHighlighted(node)){
-
-                    bgColorButton.classList.add(
-                        "active"
-                    );
-
-                }else{
-
-                    bgColorButton.classList.remove(
-                        "active"
-                    );
-
-                }
-
-            }else{
-
-                const element =
-                    node.nodeType === Node.ELEMENT_NODE
-                        ? node
-                        : node.parentElement;
-
-
-                if(
-                    element &&
-                    (
-                        isHighlightElement(element) ||
-                        element.closest(
-                            'span[data-note-highlight="true"]'
-                        )
-                    )
-                ){
-
-                    bgColorButton.classList.add(
-                        "active"
-                    );
-
-                }else{
-
-                    bgColorButton.classList.remove(
-                        "active"
-                    );
-
-                }
-
-            }
-
-
-            return;
-
-        }
-
-
-        // 有选择文字：
-        // 只有全部是黄色时才显示 active
         if(
-            isEntireSelectionHighlighted(
-                range
-            )
+            selectionHasYellow(range)
         ){
 
             bgColorButton.classList.add(
@@ -933,53 +494,14 @@ if($("textBgColorBtn")){
 
 
     // ========================================================
-    // 监听选区变化
+    // 监听光标 / 选区变化
     // ========================================================
 
     document.addEventListener(
         "selectionchange",
         () => {
 
-            const editor =
-                $("noteEditor");
-
-
-            if(!editor){
-                return;
-            }
-
-
-            const selection =
-                window.getSelection();
-
-
-            if(
-                !selection ||
-                !selection.rangeCount
-            ){
-
-                bgColorButton.classList.remove(
-                    "active"
-                );
-
-                return;
-
-            }
-
-
-            const range =
-                selection.getRangeAt(0);
-
-
-            if(
-                editor.contains(
-                    range.commonAncestorContainer
-                )
-            ){
-
-                updateHighlightButton();
-
-            }
+            updateHighlightButton();
 
         }
     );
