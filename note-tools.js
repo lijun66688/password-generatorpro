@@ -131,13 +131,21 @@ if($("insertNoteTime")){
 }
 
 // ============================================================
-// 笔记文字背景色 / 高亮
-// Word 风格：任意选区增加 / 取消黄色高亮
+
+
+
 // ============================================================
 // 笔记文字背景色 / 高亮
-// 固定黄色 #fff59d
-// 使用现有 contenteditable 格式系统
-// 不修改 B / I / U
+// 固定黄色：#fff59d
+//
+// 功能：
+// 1. 选中文字 → 添加黄色背景
+// 2. 选中已经高亮的文字 → 取消黄色背景
+// 3. 光标放在高亮文字中 → 按钮显示 active
+// 4. 选区全部是高亮 → 按钮显示 active
+// 5. 选区包含普通文字 → 按钮不 active
+// 6. 不影响 B / I / U
+// 7. 不使用颜色选择器
 // ============================================================
 
 if($("textBgColorBtn")){
@@ -150,22 +158,35 @@ if($("textBgColorBtn")){
 
 
     // ========================================================
-    // 保存高亮按钮点击前的选区
+    // 保存点击按钮之前的编辑器选区
+    // 防止手机点击按钮后选区丢失
     // ========================================================
 
     bgColorButton.addEventListener(
         "mousedown",
         function(e){
 
-            /*
-             * 非常重要：
-             * 防止按钮抢走编辑器选区。
-             */
             e.preventDefault();
-
 
             saveNoteSelection();
 
+        }
+    );
+
+
+    // ========================================================
+    // 手机触摸开始时保存选区
+    // ========================================================
+
+    bgColorButton.addEventListener(
+        "touchstart",
+        function(){
+
+            saveNoteSelection();
+
+        },
+        {
+            passive:true
         }
     );
 
@@ -186,9 +207,10 @@ if($("textBgColorBtn")){
                 return;
 
 
-            /*
-             * 恢复用户之前选中的文字。
-             */
+            // ------------------------------------------------
+            // 恢复点击按钮之前的选区
+            // ------------------------------------------------
+
             restoreNoteSelection();
 
 
@@ -210,9 +232,10 @@ if($("textBgColorBtn")){
                 selection.getRangeAt(0);
 
 
-            /*
-             * 必须是编辑器里面的选区。
-             */
+            // ------------------------------------------------
+            // 确保选区在编辑器里面
+            // ------------------------------------------------
+
             if(
                 !editor.contains(
                     range.commonAncestorContainer
@@ -224,31 +247,31 @@ if($("textBgColorBtn")){
             }
 
 
-            /*
-             * 没有选中文字就不处理。
-             */
+            // ------------------------------------------------
+            // 必须选择文字
+            // ------------------------------------------------
+
             if(range.collapsed){
 
-                return;
-
-            }
-
-
-            /*
-             * 没有真正文字就不处理。
-             */
-            if(
-                !range.toString()
-            ){
+                updateHighlightButton();
 
                 return;
 
             }
 
 
-            // ==================================================
-            // 判断当前选区是否已经是黄色
-            // ==================================================
+            if(!range.toString()){
+
+                updateHighlightButton();
+
+                return;
+
+            }
+
+
+            // ------------------------------------------------
+            // 判断当前选区是不是全部黄色
+            // ------------------------------------------------
 
             const alreadyYellow =
                 isSelectionYellow(
@@ -261,17 +284,21 @@ if($("textBgColorBtn")){
 
 
             // ==================================================
-            // 已经黄色
+            // 已经全部黄色
             // → 取消黄色
             // ==================================================
 
             if(alreadyYellow){
 
-                document.execCommand(
-                    "styleWithCSS",
-                    false,
-                    true
-                );
+                try{
+
+                    document.execCommand(
+                        "styleWithCSS",
+                        false,
+                        true
+                    );
+
+                }catch(e){}
 
 
                 changed =
@@ -285,17 +312,21 @@ if($("textBgColorBtn")){
 
 
             // ==================================================
-            // 没有黄色
+            // 不是全部黄色
             // → 增加黄色
             // ==================================================
 
             else{
 
-                document.execCommand(
-                    "styleWithCSS",
-                    false,
-                    true
-                );
+                try{
+
+                    document.execCommand(
+                        "styleWithCSS",
+                        false,
+                        true
+                    );
+
+                }catch(e){}
 
 
                 changed =
@@ -308,9 +339,10 @@ if($("textBgColorBtn")){
             }
 
 
-            /*
-             * 保持选区。
-             */
+            // ------------------------------------------------
+            // 保存操作后的选区
+            // ------------------------------------------------
+
             const newSelection =
                 window.getSelection();
 
@@ -328,20 +360,20 @@ if($("textBgColorBtn")){
             }
 
 
-            /*
-             * 更新按钮状态。
-             */
+            // ------------------------------------------------
+            // 更新按钮状态
+            // ------------------------------------------------
+
             updateHighlightButton();
 
 
-            /*
-             * 标记笔记修改。
-             */
+            // ------------------------------------------------
+            // 自动保存
+            // ------------------------------------------------
+
             if(changed){
 
-                noteHasChanges =
-                    true;
-
+                noteHasChanges = true;
 
                 scheduleNoteAutoSave();
 
@@ -352,13 +384,93 @@ if($("textBgColorBtn")){
 
 
     // ========================================================
-    // 判断当前选区是不是黄色背景
+    // 判断当前选区 / 光标位置是否为黄色高亮
     // ========================================================
 
     function isSelectionYellow(
         range,
         editor
     ){
+
+        // ====================================================
+        // 情况一：
+        // 光标没有选择文字，只是停在某个文字里面
+        // ====================================================
+
+        if(range.collapsed){
+
+            let node =
+                range.startContainer;
+
+
+            if(
+                node.nodeType ===
+                Node.TEXT_NODE
+            ){
+
+                node =
+                    node.parentElement;
+
+            }
+
+
+            while(
+                node &&
+                node !== editor
+            ){
+
+                if(
+                    node.nodeType ===
+                    Node.ELEMENT_NODE
+                ){
+
+                    const background =
+                        getComputedStyle(node)
+                        .backgroundColor
+                        .replace(/\s/g,"")
+                        .toLowerCase();
+
+
+                    if(
+                        background ===
+                        "rgb(255,245,157)"
+                    ){
+
+                        return true;
+
+                    }
+
+
+                    if(
+                        background ===
+                        "#fff59d"
+                    ){
+
+                        return true;
+
+                    }
+
+                }
+
+
+                node =
+                    node.parentElement;
+
+            }
+
+
+            return false;
+
+        }
+
+
+        // ====================================================
+        // 情况二：
+        // 选择了一段文字
+        //
+        // 必须保证：
+        // 选中的所有文字都是黄色
+        // ====================================================
 
         const walker =
             document.createTreeWalker(
@@ -404,9 +516,10 @@ if($("textBgColorBtn")){
                 continue;
 
 
-            /*
-             * 只检查真正选中的文字。
-             */
+            // ------------------------------------------------
+            // 计算这个文字节点真正被选中的部分
+            // ------------------------------------------------
+
             let start = 0;
 
             let end =
@@ -446,6 +559,7 @@ if($("textBgColorBtn")){
                 );
 
 
+            // 忽略纯空格、换行
             if(!selectedText.trim())
                 continue;
 
@@ -453,12 +567,12 @@ if($("textBgColorBtn")){
             hasText = true;
 
 
-            /*
-             * 找到文字所在元素。
-             */
+            // ------------------------------------------------
+            // 检查文字所在元素
+            // ------------------------------------------------
+
             let element =
                 node.parentElement;
-
 
             let yellow = false;
 
@@ -469,18 +583,15 @@ if($("textBgColorBtn")){
             ){
 
                 const background =
-                    element.style
-                        ?.backgroundColor
-                        ?.replace(
-                            /\s/g,
-                            ""
-                        )
-                        .toLowerCase();
+                    getComputedStyle(element)
+                    .backgroundColor
+                    .replace(/\s/g,"")
+                    .toLowerCase();
 
 
                 if(
                     background ===
-                    "#fff59d"
+                    "rgb(255,245,157)"
                 ){
 
                     yellow = true;
@@ -492,7 +603,7 @@ if($("textBgColorBtn")){
 
                 if(
                     background ===
-                    "rgb(255,245,157)"
+                    "#fff59d"
                 ){
 
                     yellow = true;
@@ -568,6 +679,10 @@ if($("textBgColorBtn")){
             selection.getRangeAt(0);
 
 
+        // ------------------------------------------------
+        // 当前光标/选区不在笔记编辑器里面
+        // ------------------------------------------------
+
         if(
             !editor.contains(
                 range.commonAncestorContainer
@@ -583,80 +698,113 @@ if($("textBgColorBtn")){
         }
 
 
-        if(
-            !range.collapsed &&
+        // ------------------------------------------------
+        // 判断当前状态
+        // ------------------------------------------------
+
+        const active =
             isSelectionYellow(
                 range,
                 editor
-            )
-        ){
+            );
 
-            bgColorButton
-                .classList
-                .add("active");
 
-        }
-
-        else{
-
-            bgColorButton
-                .classList
-                .remove("active");
-
-        }
+        bgColorButton
+            .classList
+            .toggle(
+                "active",
+                active
+            );
 
     }
 
 
     // ========================================================
-    // 选区改变时同步按钮
+    // 浏览器选区发生变化
     // ========================================================
 
     document.addEventListener(
         "selectionchange",
         function(){
 
-            const editor =
-                getNoteEditor();
-
-
-            if(!editor)
-                return;
-
-
-            const selection =
-                window.getSelection();
-
-
-            if(
-                !selection ||
-                !selection.rangeCount
-            ){
-
-                bgColorButton
-                    .classList
-                    .remove("active");
-
-                return;
-
-            }
-
-
-            const range =
-                selection.getRangeAt(0);
-
-
-            if(
-                editor.contains(
-                    range.commonAncestorContainer
-                )
-            ){
-
-                updateHighlightButton();
-
-            }
+            updateHighlightButton();
 
         }
     );
 
+
+    // ========================================================
+    // 鼠标选择完成
+    // ========================================================
+
+    const noteEditor =
+        getNoteEditor();
+
+
+    if(noteEditor){
+
+        noteEditor.addEventListener(
+            "mouseup",
+            function(){
+
+                updateHighlightButton();
+
+            }
+        );
+
+
+        // ====================================================
+        // 键盘移动光标
+        // ====================================================
+
+        noteEditor.addEventListener(
+            "keyup",
+            function(){
+
+                updateHighlightButton();
+
+            }
+        );
+
+
+        // ====================================================
+        // iPhone / iPad 触摸选择
+        // ====================================================
+
+        noteEditor.addEventListener(
+            "touchend",
+            function(){
+
+                setTimeout(
+                    updateHighlightButton,
+                    50
+                );
+
+            }
+        );
+
+
+        // ====================================================
+        // 编辑器获得焦点
+        // ====================================================
+
+        noteEditor.addEventListener(
+            "focus",
+            function(){
+
+                updateHighlightButton();
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // 初始化按钮状态
+    // ========================================================
+
+    updateHighlightButton();
+
 }
+
