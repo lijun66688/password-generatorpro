@@ -32,6 +32,8 @@ let noteAutoSaveTimer = null;
 
 let noteSaveInProgress = false;
 
+let noteHasChanges = false;
+
 
 const $ = id =>
 document.getElementById(id);
@@ -2018,6 +2020,7 @@ async function openHistoryNote(note){
 
         return;
 
+   noteHasChanges = false;
 
     editingNoteId =
         note.id;
@@ -2189,6 +2192,8 @@ async function openHistoryNote(note){
 
 function openNoteEditor(note = null){
     
+
+    noteHasChanges = false;
     const titleBox = $("noteTitle")?.closest(".box");
     const editorBox = $("noteEditor")?.closest(".box");
     const buttons = $("saveNote")?.closest(".btns");
@@ -2416,6 +2421,8 @@ async function createNewNotePage(){
      * 不修改历史笔记。
      * 不替换 notesList。
      */
+
+    noteHasChanges = false;
     editingNoteId =
         null;
 
@@ -3281,54 +3288,55 @@ async function closeNoteEditor(){
 if($("backToNotes")){
     $("backToNotes").onclick = async()=>{
 
-        const title = $("noteTitle")?.value.trim();
-        const content = $("noteEditor")?.innerHTML;
-        const tags = $("noteTags")?.value.trim();
-
-        // 新建笔记时，如果什么都没写，直接返回
-        if(!editingNoteId && !title && !content && !tags){
+        // 没有任何修改，直接返回笔记列表
+        if(!noteHasChanges){
             await closeNoteEditor();
             return;
         }
 
-        // 有内容时询问
-        if(title || content || tags){
+        const title = $("noteTitle")?.value.trim();
+        const content = $("noteEditor")?.innerHTML || "";
+        const tags = $("noteTags")?.value.trim();
 
-            const save = confirm("笔记有修改，是否保存？");
+        // 有修改，询问是否保存
+        const save = confirm("笔记有修改，是否保存？");
 
-            if(!save){
-                return;
-            }
-
-            // 已有笔记 → 保存修改
-            if(editingNoteId){
-
-                await NotesManager.updateNote(editingNoteId,{
-                    title: title,
-                    content: content,
-                    category: $("noteCategory").value,
-                    tags: $("noteTags").value
-                        .split(",")
-                        .map(x=>x.trim())
-                        .filter(x=>x),
-                    todo:[]
-                });
-
-            }else{
-
-                // 新笔记 → 保存
-                await NotesManager.createNote({
-                    title: title,
-                    content: content,
-                    category: $("noteCategory").value,
-                    tags: $("noteTags").value
-                        .split(",")
-                        .map(x=>x.trim())
-                        .filter(x=>x),
-                    todo:[]
-                });
-            }
+        // 选择取消保存，留在编辑页面
+        if(!save){
+            return;
         }
+
+        // 已有笔记 → 保存修改
+        if(editingNoteId){
+
+            await NotesManager.updateNote(editingNoteId,{
+                title: title,
+                content: content,
+                category: $("noteCategory").value,
+                tags: $("noteTags").value
+                    .split(",")
+                    .map(x=>x.trim())
+                    .filter(x=>x),
+                todo:[]
+            });
+
+        }else{
+
+            // 新笔记 → 保存
+            await NotesManager.createNote({
+                title: title,
+                content: content,
+                category: $("noteCategory").value,
+                tags: $("noteTags").value
+                    .split(",")
+                    .map(x=>x.trim())
+                    .filter(x=>x),
+                todo:[]
+            });
+        }
+
+        // 保存完成，清除修改状态
+        noteHasChanges = false;
 
         await closeNoteEditor();
     };
@@ -4302,6 +4310,8 @@ function handleTodoCheck(e){
 
 function scheduleNoteAutoSave(){
 
+   noteHasChanges = true;
+
     clearTimeout(
         noteAutoSaveTimer
     );
@@ -4458,6 +4468,35 @@ if($("noteEditor")){
 
 }
 
+
+   if($("noteTitle")){
+        $("noteTitle").addEventListener(
+           "input",
+            ()=>{
+             noteHasChanges = true;
+           }
+       );
+   }
+
+
+   if($("noteTags")){
+    $("noteTags").addEventListener(
+        "input",
+        ()=>{
+            noteHasChanges = true;
+        }
+    );
+}
+
+
+    if($("noteCategory")){
+    $("noteCategory").addEventListener(
+        "change",
+        ()=>{
+            noteHasChanges = true;
+        }
+    );
+}
 
 
 
