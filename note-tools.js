@@ -146,12 +146,14 @@ if($("insertNoteTime")){
 // 笔记文字背景色 / 高亮
 // 兼容 iPhone Safari：两种模式
 // 1. 光标折叠点T：开启/关闭后续输入高亮
-// 2. 选中文字点T：切换选中文字高亮，不改变开关状态
-// ============================================================
+// 2. 选中文字点T：切换选中文字高亮，不改变开关
 
-let noteBgMode = false;
-let lastRange = null;
-let lastText = "";
+
+
+// ============================================================
+// 笔记文字背景色 / 高亮 兜底稳定版
+// 只支持：选中文字后点T，切换黄色高亮
+// ============================================================
 
 if ($("textBgColorBtn")) {
     const bgBtn = $("textBgColorBtn");
@@ -159,49 +161,41 @@ if ($("textBgColorBtn")) {
     const COLOR_RGB = "rgb(255, 245, 157)";
     const editor = getNoteEditor();
 
-    if (bgBtn) {
-        bgBtn.addEventListener("mousedown", function (e) {
-            e.preventDefault();
-            saveNoteSelection();
-        });
+    bgBtn.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        saveNoteSelection();
+    });
 
-        bgBtn.addEventListener("touchstart", function () {
-            saveNoteSelection();
-        }, { passive: true });
+    bgBtn.addEventListener("touchstart", function () {
+        saveNoteSelection();
+    }, { passive: true });
 
-        bgBtn.addEventListener("click", function () {
-            if (!editor) return;
+    bgBtn.addEventListener("click", function () {
+        if (!editor) return;
 
-            restoreNoteSelection();
+        restoreNoteSelection();
 
-            const selection = window.getSelection();
-            if (!selection || !selection.rangeCount) return;
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return;
 
-            const range = selection.getRangeAt(0);
-            if (!editor.contains(range.commonAncestorContainer)) return;
+        const range = selection.getRangeAt(0);
+        if (!editor.contains(range.commonAncestorContainer)) return;
 
-            // 情况1：没有选中文字，切换后续输入高亮模式
-            if (range.collapsed) {
-                noteBgMode = !noteBgMode;
-                bgBtn.classList.toggle("active", noteBgMode);
-                editor.focus();
-                return;
-            }
+        // 没有选中文字，直接返回，不开启任何自动模式
+        if (range.collapsed) {
+            return;
+        }
 
-            // 情况2：选中文字，切换高亮，不改变 noteBgMode
-            const yellow = isRangeYellow(range);
+        const yellow = isRangeYellow(range);
 
-            document.execCommand("styleWithCSS", false, true);
-            document.execCommand("backColor", false, yellow ? "transparent" : COLOR);
+        document.execCommand("styleWithCSS", false, true);
+        document.execCommand("backColor", false, yellow ? "transparent" : COLOR);
 
-            bgBtn.classList.toggle("active", noteBgMode);
-
-            noteHasChanges = true;
-            if (typeof scheduleNoteAutoSave === "function") {
-                scheduleNoteAutoSave();
-            }
-        });
-    }
+        noteHasChanges = true;
+        if (typeof scheduleNoteAutoSave === "function") {
+            scheduleNoteAutoSave();
+        }
+    });
 
     function isRangeYellow(range) {
         let node = range.commonAncestorContainer;
@@ -220,74 +214,10 @@ if ($("textBgColorBtn")) {
 
         return false;
     }
-
-    document.addEventListener("selectionchange", function () {
-        if (!editor) return;
-        bgBtn.classList.toggle("active", noteBgMode);
-    });
-
-    if (editor) {
-        // 记录输入前的状态
-        editor.addEventListener("keydown", function () {
-            if (!noteBgMode) return;
-
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-
-            lastRange = selection.getRangeAt(0).cloneRange();
-            lastText = editor.innerText || "";
-        });
-
-        // 中文输入法确认后统一处理
-        editor.addEventListener("compositionend", function (e) {
-            if (!noteBgMode) return;
-
-            const text = e.data || "";
-            if (!text) return;
-
-            insertHighlightText(text);
-        });
-
-        // 普通英文、数字、符号输入
-        editor.addEventListener("beforeinput", function (e) {
-            if (!noteBgMode) return;
-
-            if (e.inputType !== "insertText") return;
-            if (e.isComposing) return;
-
-            e.preventDefault();
-
-            const text = e.data || "";
-            if (!text) return;
-
-            insertHighlightText(text);
-        });
-
-        function insertHighlightText(text) {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-
-            const range = selection.getRangeAt(0);
-
-            const span = document.createElement("span");
-            span.style.backgroundColor = COLOR;
-            span.textContent = text;
-
-            range.insertNode(span);
-
-            // 光标放到黄色文字后面
-            range.setStartAfter(span);
-            range.setEndAfter(span);
-
-            selection.removeAllRanges();
-            selection.addRange(range);
-
-            noteHasChanges = true;
-            if (typeof scheduleNoteAutoSave === "function") {
-                scheduleNoteAutoSave();
-            }
-        }
-    }
 }
+
+
+
+
 
 
