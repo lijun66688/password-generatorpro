@@ -130,193 +130,382 @@ if($("insertNoteTime")){
 
 }
 
-// ============================================================
-
 
 
 // ============================================================
 // 笔记文字背景色 / 高亮
-// 只处理 textBgColorBtn
 //
 // 功能：
-// 1. 光标模式：
-//    光标放在文字后面 → 点击 T → 激活背景色
-//    后续输入文字自动带黄色背景
-//    再点击 T → 取消激活
-//    后续输入文字不再带黄色背景
 //
-// 2. 选中文字模式：
-//    选中文字 → 点击 T → 黄色背景
-//    再点击 T → 取消黄色背景
+// ① 光标模式
+// 光标放在文字后面
+// → 点击 T：激活背景色
+// → 后面输入的文字自动带黄色背景
+// → 再点击 T：取消激活
+// → 后面输入的文字不再带黄色背景
 //
-// 其他笔记功能不处理
+// ② 选中文字模式
+// 选中文字
+// → 点击 T：添加黄色背景
+// → 再点击 T：取消黄色背景
+//
+// 注意：
+// 不在 input 事件里面执行 execCommand。
+// 避免每输入一个字都重新处理 DOM，解决打字卡顿问题。
 // ============================================================
 
 let noteBgMode = false;
 
-if ($("textBgColorBtn")) {
+if($("textBgColorBtn")){
 
-    const bgColorButton = $("textBgColorBtn");
-    const HIGHLIGHT_COLOR = "#fff59d";
+    const bgColorButton =
+        $("textBgColorBtn");
 
-
-    // --------------------------------------------------------
-    // 点击按钮前保存光标 / 选区
-    // 防止点击工具栏后编辑器选区丢失
-    // --------------------------------------------------------
-
-    bgColorButton.addEventListener("mousedown", function(e){
-        e.preventDefault();
-        saveNoteSelection();
-    });
-
-    bgColorButton.addEventListener("touchstart", function(){
-        saveNoteSelection();
-    }, { passive:true });
-
-
-    // --------------------------------------------------------
-    // T 按钮点击
-    // --------------------------------------------------------
-
-    bgColorButton.addEventListener("click", function(){
-
-        const editor = getNoteEditor();
-
-        if(!editor) return;
-
-        // 恢复编辑器原来的光标 / 选区
-        restoreNoteSelection();
-
-        const selection = window.getSelection();
-
-        if(!selection || !selection.rangeCount){
-            return;
-        }
-
-        const range = selection.getRangeAt(0);
-
-        // 必须确认选区在笔记编辑器里面
-        if(!editor.contains(range.commonAncestorContainer)){
-            return;
-        }
-
-
-        // ====================================================
-        // 情况 1：没有选择文字
-        // ====================================================
-
-        if(range.collapsed){
-
-            // 光标模式：
-            // 只负责切换“后续输入是否自动带背景色”
-            noteBgMode = !noteBgMode;
-
-            bgColorButton.classList.toggle(
-                "active",
-                noteBgMode
-            );
-
-            // 把焦点重新放回编辑器
-            editor.focus();
-
-            return;
-        }
-
-
-        // ====================================================
-        // 情况 2：选中了文字
-        // ====================================================
-
-        const selectedText = range.toString();
-
-        if(!selectedText){
-            return;
-        }
-
-
-        // 判断当前选中的文字是不是已经全部黄色
-        const alreadyYellow = isRangeFullyYellow(
-            range,
-            editor
-        );
-
-
-        try{
-            document.execCommand(
-                "styleWithCSS",
-                false,
-                true
-            );
-        }catch(e){}
-
-
-        // 已经黄色 → 取消黄色
-        // 普通文字 → 加黄色
-        const changed = document.execCommand(
-            "backColor",
-            false,
-            alreadyYellow
-                ? "transparent"
-                : HIGHLIGHT_COLOR
-        );
-
-
-        // 选中文字操作完成以后，
-        // 不进入“后续输入高亮模式”
-        noteBgMode = false;
-
-
-        // 更新 T 按钮状态
-        updateHighlightButton();
-
-
-        // 告诉笔记系统内容发生变化
-        if(changed){
-
-            if(typeof noteHasChanges !== "undefined"){
-                noteHasChanges = true;
-            }
-
-            if(typeof scheduleNoteAutoSave === "function"){
-                scheduleNoteAutoSave();
-            }
-        }
-    });
+    const HIGHLIGHT_COLOR =
+        "#fff59d";
 
 
     // ========================================================
-    // 判断选中的文字是否全部是黄色背景
+    // 点击 T 前保存当前光标 / 选区
     // ========================================================
 
-    function isRangeFullyYellow(range, editor){
+    bgColorButton.addEventListener(
+        "mousedown",
+        function(e){
 
-        const walker = document.createTreeWalker(
-            editor,
-            NodeFilter.SHOW_TEXT,
-            null
-        );
+            e.preventDefault();
+
+            saveNoteSelection();
+
+        }
+    );
+
+
+    bgColorButton.addEventListener(
+        "touchstart",
+        function(){
+
+            saveNoteSelection();
+
+        },
+        {
+            passive:true
+        }
+    );
+
+
+    // ========================================================
+    // T 按钮
+    // ========================================================
+
+    bgColorButton.addEventListener(
+        "click",
+        function(){
+
+            const editor =
+                getNoteEditor();
+
+            if(!editor){
+                return;
+            }
+
+
+            // 恢复点击按钮之前的光标 / 选区
+            restoreNoteSelection();
+
+
+            const selection =
+                window.getSelection();
+
+
+            if(
+                !selection ||
+                !selection.rangeCount
+            ){
+                return;
+            }
+
+
+            const range =
+                selection.getRangeAt(0);
+
+
+            // 确保操作发生在笔记编辑器内部
+            if(
+                !editor.contains(
+                    range.commonAncestorContainer
+                )
+            ){
+                return;
+            }
+
+
+            // =================================================
+            // 情况 1：光标模式
+            // =================================================
+
+            if(range.collapsed){
+
+                // ---------------------------------------------
+                // 当前没有激活
+                // → 激活后续输入背景色
+                // ---------------------------------------------
+
+                if(!noteBgMode){
+
+                    try{
+
+                        document.execCommand(
+                            "styleWithCSS",
+                            false,
+                            true
+                        );
+
+                    }catch(e){}
+
+
+                    try{
+
+                        document.execCommand(
+                            "backColor",
+                            false,
+                            HIGHLIGHT_COLOR
+                        );
+
+                    }catch(e){}
+
+
+                    noteBgMode = true;
+
+
+                    bgColorButton.classList.add(
+                        "active"
+                    );
+
+                }
+
+                // ---------------------------------------------
+                // 当前已经激活
+                // → 取消后续输入背景色
+                // ---------------------------------------------
+
+                else{
+
+                    try{
+
+                        document.execCommand(
+                            "styleWithCSS",
+                            false,
+                            true
+                        );
+
+                    }catch(e){}
+
+
+                    try{
+
+                        document.execCommand(
+                            "backColor",
+                            false,
+                            "transparent"
+                        );
+
+                    }catch(e){}
+
+
+                    noteBgMode = false;
+
+
+                    bgColorButton.classList.remove(
+                        "active"
+                    );
+
+                }
+
+
+                // 焦点回编辑器
+                editor.focus();
+
+
+                return;
+            }
+
+
+            // =================================================
+            // 情况 2：选中文字
+            // =================================================
+
+            const selectedText =
+                range.toString();
+
+
+            if(!selectedText){
+                return;
+            }
+
+
+            // 判断选中的文字是否已经全部黄色
+            const alreadyYellow =
+                isRangeFullyYellow(
+                    range,
+                    editor
+                );
+
+
+            try{
+
+                document.execCommand(
+                    "styleWithCSS",
+                    false,
+                    true
+                );
+
+            }catch(e){}
+
+
+            let changed = false;
+
+
+            // ---------------------------------------------
+            // 已经黄色
+            // → 取消黄色
+            // ---------------------------------------------
+
+            if(alreadyYellow){
+
+                try{
+
+                    changed =
+                        document.execCommand(
+                            "backColor",
+                            false,
+                            "transparent"
+                        );
+
+                }catch(e){
+
+                    changed = false;
+
+                }
+
+            }
+
+            // ---------------------------------------------
+            // 普通文字
+            // → 添加黄色
+            // ---------------------------------------------
+
+            else{
+
+                try{
+
+                    changed =
+                        document.execCommand(
+                            "backColor",
+                            false,
+                            HIGHLIGHT_COLOR
+                        );
+
+                }catch(e){
+
+                    changed = false;
+
+                }
+
+            }
+
+
+            // 选中文字操作不改变后续输入模式
+            noteBgMode = false;
+
+
+            bgColorButton.classList.remove(
+                "active"
+            );
+
+
+            // 更新按钮状态
+            updateHighlightButton();
+
+
+            // 标记笔记修改
+            if(changed){
+
+                if(
+                    typeof noteHasChanges !==
+                    "undefined"
+                ){
+
+                    noteHasChanges = true;
+
+                }
+
+
+                if(
+                    typeof scheduleNoteAutoSave ===
+                    "function"
+                ){
+
+                    scheduleNoteAutoSave();
+
+                }
+
+            }
+
+        }
+    );
+
+
+    // ========================================================
+    // 判断选区是否全部是黄色背景
+    // ========================================================
+
+    function isRangeFullyYellow(
+        range,
+        editor
+    ){
+
+        const walker =
+            document.createTreeWalker(
+                editor,
+                NodeFilter.SHOW_TEXT,
+                null
+            );
+
 
         let node;
+
         let hasText = false;
 
 
-        while(node = walker.nextNode()){
+        while(
+            node = walker.nextNode()
+        ){
 
             if(
                 !node.nodeValue ||
                 !node.nodeValue.trim()
             ){
+
                 continue;
+
             }
 
 
             let intersects = false;
 
+
             try{
-                intersects = range.intersectsNode(node);
+
+                intersects =
+                    range.intersectsNode(
+                        node
+                    );
+
             }catch(e){
+
                 intersects = false;
+
             }
 
 
@@ -326,18 +515,30 @@ if ($("textBgColorBtn")) {
 
 
             let start = 0;
-            let end = node.nodeValue.length;
+
+            let end =
+                node.nodeValue.length;
 
 
-            // 处理选择开始位置
-            if(node === range.startContainer){
-                start = range.startOffset;
+            if(
+                node ===
+                range.startContainer
+            ){
+
+                start =
+                    range.startOffset;
+
             }
 
 
-            // 处理选择结束位置
-            if(node === range.endContainer){
-                end = range.endOffset;
+            if(
+                node ===
+                range.endContainer
+            ){
+
+                end =
+                    range.endOffset;
+
             }
 
 
@@ -353,17 +554,21 @@ if ($("textBgColorBtn")) {
                 );
 
 
-            if(!selectedText.trim()){
+            if(
+                !selectedText.trim()
+            ){
+
                 continue;
+
             }
 
 
             hasText = true;
 
 
-            // 检查这个文字节点的父级
-            // 有没有黄色背景
-            let element = node.parentElement;
+            let element =
+                node.parentElement;
+
 
             let yellow = false;
 
@@ -374,10 +579,12 @@ if ($("textBgColorBtn")) {
             ){
 
                 const background =
-                    getComputedStyle(element)
-                        .backgroundColor
-                        .replace(/\s/g,"")
-                        .toLowerCase();
+                    getComputedStyle(
+                        element
+                    )
+                    .backgroundColor
+                    .replace(/\s/g,"")
+                    .toLowerCase();
 
 
                 if(
@@ -386,32 +593,41 @@ if ($("textBgColorBtn")) {
                 ){
 
                     yellow = true;
+
                     break;
+
                 }
 
 
                 if(
-                    background === "#fff59d"
+                    background ===
+                    "#fff59d"
                 ){
 
                     yellow = true;
+
                     break;
+
                 }
 
 
-                element = element.parentElement;
+                element =
+                    element.parentElement;
+
             }
 
 
-            // 只要有一部分没有黄色
-            // 就认为当前选区不是全部黄色
             if(!yellow){
+
                 return false;
+
             }
+
         }
 
 
         return hasText;
+
     }
 
 
@@ -421,17 +637,24 @@ if ($("textBgColorBtn")) {
 
     function updateHighlightButton(){
 
-        const editor = getNoteEditor();
+        const editor =
+            getNoteEditor();
+
 
         if(!editor){
 
-            bgColorButton.classList.remove("active");
+            bgColorButton.classList.remove(
+                "active"
+            );
 
             return;
+
         }
 
 
-        const selection = window.getSelection();
+        const selection =
+            window.getSelection();
+
 
         if(
             !selection ||
@@ -444,6 +667,7 @@ if ($("textBgColorBtn")) {
             );
 
             return;
+
         }
 
 
@@ -463,12 +687,13 @@ if ($("textBgColorBtn")) {
             );
 
             return;
+
         }
 
 
-        // ----------------------------------------------------
-        // 光标模式
-        // ----------------------------------------------------
+        // ---------------------------------------------
+        // 光标状态
+        // ---------------------------------------------
 
         if(range.collapsed){
 
@@ -478,12 +703,13 @@ if ($("textBgColorBtn")) {
             );
 
             return;
+
         }
 
 
-        // ----------------------------------------------------
-        // 选中文字模式
-        // ----------------------------------------------------
+        // ---------------------------------------------
+        // 选中文字状态
+        // ---------------------------------------------
 
         bgColorButton.classList.toggle(
             "active",
@@ -492,110 +718,72 @@ if ($("textBgColorBtn")) {
                 editor
             )
         );
+
     }
 
 
     // ========================================================
-    // 编辑器事件
+    // 编辑器状态监听
+    //
+    // 注意：
+    // 这里绝对不再监听 input 来执行 backColor。
+    // 这样输入文字时不会反复执行 DOM 格式化。
     // ========================================================
 
-    const noteEditor = getNoteEditor();
+    const noteEditor =
+        getNoteEditor();
 
 
     if(noteEditor){
 
-        // 鼠标选择文字
         noteEditor.addEventListener(
             "mouseup",
             function(){
+
                 updateHighlightButton();
+
             }
         );
 
 
-        // 键盘选择文字
         noteEditor.addEventListener(
             "keyup",
             function(){
+
                 updateHighlightButton();
+
             }
         );
 
 
-        // 手机触摸选择文字
         noteEditor.addEventListener(
             "touchend",
             function(){
+
                 setTimeout(
                     updateHighlightButton,
                     50
                 );
+
             }
         );
 
 
-        // 编辑器获得焦点
         noteEditor.addEventListener(
             "focus",
             function(){
+
                 updateHighlightButton();
+
             }
         );
 
-
-        // ----------------------------------------------------
-        // 监听输入
-        //
-        // 只有 noteBgMode = true 时，
-        // 后续输入文字才自动加黄色背景
-        // ----------------------------------------------------
-
-        noteEditor.addEventListener(
-            "input",
-            function(){
-
-                if(!noteBgMode){
-                    return;
-                }
-
-
-                try{
-
-                    document.execCommand(
-                        "styleWithCSS",
-                        false,
-                        true
-                    );
-
-
-                    document.execCommand(
-                        "backColor",
-                        false,
-                        HIGHLIGHT_COLOR
-                    );
-
-                }catch(e){}
-
-
-                // 标记笔记已经修改
-                if(typeof noteHasChanges !== "undefined"){
-                    noteHasChanges = true;
-                }
-
-
-                // 自动保存
-                if(typeof scheduleNoteAutoSave === "function"){
-                    scheduleNoteAutoSave();
-                }
-
-
-                // 更新按钮状态
-                updateHighlightButton();
-            }
-        );
     }
 
 
-    // 初始状态
+    // 初始按钮状态
     updateHighlightButton();
+
 }
+
+
