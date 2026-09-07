@@ -138,15 +138,18 @@ if($("insertNoteTime")){
 // 笔记文字背景色 / 高亮
 // 固定黄色：#fff59d
 //
+
 // ============================================================
-// 笔记文字背景色 / 高亮
+// 笔记文字背景色 / 高亮（兼容iPhone Safari）
 // 固定黄色：#fff59d
 // ============================================================
 let noteBgMode = false;
+let mo = null; //MutationObserver实例
 if ($("textBgColorBtn")) {
     const bgBtn = $("textBgColorBtn");
     const COLOR = "#fff59d";
     const COLOR_RGB = "rgb(255, 245, 157)";
+    const editor = getNoteEditor();
 
     bgBtn.addEventListener("mousedown", function (e) {
         e.preventDefault();
@@ -157,7 +160,6 @@ if ($("textBgColorBtn")) {
     }, { passive: true });
 
     bgBtn.addEventListener("click", function () {
-        const editor = getNoteEditor();
         if (!editor) return;
         restoreNoteSelection();
         const selection = window.getSelection();
@@ -165,10 +167,17 @@ if ($("textBgColorBtn")) {
         const range = selection.getRangeAt(0);
         if (!editor.contains(range.commonAncestorContainer)) return;
 
-        // 1.光标折叠，无选中文字：切换持续输入高亮开关
+        // 1.光标折叠：切换持续输入高亮开关
         if (range.collapsed) {
             noteBgMode = !noteBgMode;
             bgBtn.classList.toggle("active", noteBgMode);
+
+            // 开启模式：启动DOM监听；关闭模式停止监听
+            if(noteBgMode){
+                startObserver();
+            }else{
+                stopObserver();
+            }
             editor.focus();
             return;
         }
@@ -199,54 +208,48 @@ if ($("textBgColorBtn")) {
     }
 
     document.addEventListener("selectionchange", function () {
-        const editor = getNoteEditor();
         if (!editor) return;
         bgBtn.classList.toggle("active", noteBgMode);
     });
 
-    const editor = getNoteEditor();
-    if (editor) {
-        let lastTextLength = 0;
+    //启动DOM变化监听
+    function startObserver(){
+        if(mo) return;
+        mo = new MutationObserver((mutations)=>{
+            if(!noteBgMode) return;
+            for(const mut of mutations){
+                for(const n of mut.addedNodes){
+                    //只处理新增纯文本节点，且外层还没有黄色span
+                    if(n.nodeType === 3 && n.textContent.trim()!==''){
+                        if(n.parentNode.style.backgroundColor !== COLOR){
+                            const sp = document.createElement("span");
+                            sp.style.backgroundColor = COLOR;
+                            n.parentNode.insertBefore(sp, n);
+                            sp.appendChild(n);
+                            //恢复光标
+                            const sel = window.getSelection();
+                            const r = document.createRange();
+                            r.setStartAfter(sp);
+                            r.setEndAfter(sp);
+                            sel.removeAllRanges();
+                            sel.addRange(r);
 
-        editor.addEventListener("input", function (e) {
-            // 模式关闭直接退出，不碰DOM
-            if (!noteBgMode) return;
-            // 只处理文本插入，跳过删除、回车、粘贴
-            if (e.inputType !== "insertText") return;
-
-            const sel = window.getSelection();
-            if (!sel.rangeCount) return;
-            const r = sel.getRangeAt(0);
-            const textNode = r.endContainer;
-            // 必须是文本节点
-            if (textNode.nodeType !== 3) return;
-
-            const addedLen = e.data.length;
-            // 取刚输入出来的那一段文本
-            const offsetStart = r.endOffset - addedLen;
-            const newText = textNode.substringData(offsetStart, addedLen);
-
-            if (!newText) return;
-
-            // 分割文本节点：旧部分留在原地，新文本切出来，包span
-            textNode.splitText(offsetStart);
-            const newTextNode = textNode.nextSibling;
-
-            const span = document.createElement("span");
-            span.style.backgroundColor = COLOR;
-            span.appendChild(newTextNode);
-            textNode.parentNode.insertBefore(span, newTextNode);
-
-            // 把光标挪到span后面
-            r.setStartAfter(span);
-            r.setEndAfter(span);
-            sel.removeAllRanges();
-            sel.addRange(r);
-
-            noteHasChanges = true;
-            if (typeof scheduleNoteAutoSave === "function") {
-                scheduleNoteAutoSave();
+                            noteHasChanges=true;
+                            if(typeof scheduleNoteAutoSave==="function") scheduleNoteAutoSave();
+                        }
+                    }
+                }
             }
         });
+        mo.observe(editor, {childList:true, subtree:true});
+    }
+
+    function stopObserver(){
+        if(mo){
+            mo.disconnect();
+            mo = null;
+        }
     }
 }
+
+
