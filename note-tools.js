@@ -84,18 +84,8 @@ if($("insertNoteTime")){
             ).padStart(2,"0") + "-" +
             String(
                 now.getDate()
-            ).padStart(2,"0") ;
-          /*  String(
-             now.getHours()
-             ).padStart(2,"0") + ":" +
-            String(
-               now.getMinutes()
-            ).padStart(2,"0") + ":" +
-            String(
-                now.getSeconds()
-           ).padStart(2,"0");
-         */
-           
+            ).padStart(2,"0");
+
 
         // ====================================================
         // 插入时间
@@ -131,7 +121,6 @@ if($("insertNoteTime")){
 }
 
 
-
 // ============================================================
 // 笔记文字背景色 / 高亮
 //
@@ -155,6 +144,11 @@ if($("insertNoteTime")){
 // ============================================================
 
 let noteBgMode = false;
+
+
+// ============================================================
+// T 按钮
+// ============================================================
 
 if($("textBgColorBtn")){
 
@@ -210,7 +204,10 @@ if($("textBgColorBtn")){
             }
 
 
+            // =================================================
             // 恢复点击按钮之前的光标 / 选区
+            // =================================================
+
             restoreNoteSelection();
 
 
@@ -230,7 +227,10 @@ if($("textBgColorBtn")){
                 selection.getRangeAt(0);
 
 
+            // =================================================
             // 确保操作发生在笔记编辑器内部
+            // =================================================
+
             if(
                 !editor.contains(
                     range.commonAncestorContainer
@@ -246,10 +246,11 @@ if($("textBgColorBtn")){
 
             if(range.collapsed){
 
-                // ---------------------------------------------
+                // =================================================
                 // 当前没有激活
+                //
                 // → 激活后续输入背景色
-                // ---------------------------------------------
+                // =================================================
 
                 if(!noteBgMode){
 
@@ -284,114 +285,114 @@ if($("textBgColorBtn")){
 
                 }
 
-                // ---------------------------------------------
+
+                // =================================================
                 // 当前已经激活
-                // → 取消后续输入背景色
-                // ---------------------------------------------
+                //
+                // → 关闭后续输入背景色
+                //
+                // 关键：
+                // 不插入 \u200B 隐形字符。
+                //
+                // 建立一个透明背景的输入容器，
+                // 将光标放入透明容器。
+                //
+                // 后续输入文字继承透明背景。
+                // =================================================
 
                 else{
 
-    // =====================================================
-    // 关闭背景色输入模式
-    //
-    // 不能只执行 backColor("transparent")，
-    // 因为 contenteditable 可能继续继承之前的黄色格式。
-    //
-    // 这里在当前光标位置建立一个透明背景的输入点，
-    // 让后续输入明确使用透明背景。
-    // =====================================================
+                    try{
 
-    try{
-
-        document.execCommand(
-            "styleWithCSS",
-            false,
-            true
-        );
-
-    }catch(e){}
+                        const currentSelection =
+                            window.getSelection();
 
 
-    try{
+                        if(
+                            currentSelection &&
+                            currentSelection.rangeCount
+                        ){
 
-        const selection =
-            window.getSelection();
-
-        if(
-            selection &&
-            selection.rangeCount
-        ){
-
-            const currentRange =
-                selection.getRangeAt(0);
-
-            if(
-                currentRange.collapsed &&
-                editor.contains(
-                    currentRange.commonAncestorContainer
-                )
-            ){
-
-                // 插入一个透明背景的临时输入节点
-                const span =
-                    document.createElement("span");
-
-                span.style.backgroundColor =
-                    "transparent";
-
-                span.appendChild(
-                    document.createTextNode("\u200B")
-                );
+                            const currentRange =
+                                currentSelection.getRangeAt(0);
 
 
-                currentRange.insertNode(span);
+                            if(
+                                currentRange.collapsed &&
+                                editor.contains(
+                                    currentRange.commonAncestorContainer
+                                )
+                            ){
+
+                                // 创建透明背景容器
+                                const span =
+                                    document.createElement(
+                                        "span"
+                                    );
 
 
-                // 把光标放到透明节点内部
-                const newRange =
-                    document.createRange();
-
-                newRange.setStart(
-                    span.firstChild,
-                    0
-                );
-
-                newRange.collapse(true);
+                                span.style.backgroundColor =
+                                    "transparent";
 
 
-                selection.removeAllRanges();
-
-                selection.addRange(
-                    newRange
-                );
-
-            }
-
-        }
-
-    }catch(e){}
+                                // 在当前光标位置插入
+                                currentRange.insertNode(
+                                    span
+                                );
 
 
-    // 关闭模式
-    noteBgMode = false;
+                                // 创建新的光标位置
+                                const newRange =
+                                    document.createRange();
 
 
-    bgColorButton.classList.remove(
-        "active"
-    );
+                                newRange.selectNodeContents(
+                                    span
+                                );
 
 
-    // 保持编辑器焦点
-    editor.focus();
+                                newRange.collapse(
+                                    true
+                                );
 
-}
+
+                                currentSelection.removeAllRanges();
 
 
+                                currentSelection.addRange(
+                                    newRange
+                                );
+
+                            }
+
+                        }
+
+                    }catch(e){}
+
+
+                    // =================================================
+                    // 关闭背景色模式
+                    // =================================================
+
+                    noteBgMode = false;
+
+
+                    bgColorButton.classList.remove(
+                        "active"
+                    );
+
+                }
+
+
+                // =================================================
                 // 焦点回编辑器
+                // =================================================
+
                 editor.focus();
 
 
                 return;
+
             }
 
 
@@ -408,7 +409,10 @@ if($("textBgColorBtn")){
             }
 
 
+            // =================================================
             // 判断选中的文字是否已经全部黄色
+            // =================================================
+
             const alreadyYellow =
                 isRangeFullyYellow(
                     range,
@@ -430,10 +434,10 @@ if($("textBgColorBtn")){
             let changed = false;
 
 
-            // ---------------------------------------------
+            // =================================================
             // 已经黄色
             // → 取消黄色
-            // ---------------------------------------------
+            // =================================================
 
             if(alreadyYellow){
 
@@ -454,10 +458,11 @@ if($("textBgColorBtn")){
 
             }
 
-            // ---------------------------------------------
+
+            // =================================================
             // 普通文字
             // → 添加黄色
-            // ---------------------------------------------
+            // =================================================
 
             else{
 
@@ -479,7 +484,10 @@ if($("textBgColorBtn")){
             }
 
 
+            // =================================================
             // 选中文字操作不改变后续输入模式
+            // =================================================
+
             noteBgMode = false;
 
 
@@ -488,11 +496,17 @@ if($("textBgColorBtn")){
             );
 
 
+            // =================================================
             // 更新按钮状态
+            // =================================================
+
             updateHighlightButton();
 
 
+            // =================================================
             // 标记笔记修改
+            // =================================================
+
             if(changed){
 
                 if(
@@ -755,9 +769,9 @@ if($("textBgColorBtn")){
         }
 
 
-        // ---------------------------------------------
+        // =================================================
         // 光标状态
-        // ---------------------------------------------
+        // =================================================
 
         if(range.collapsed){
 
@@ -771,9 +785,9 @@ if($("textBgColorBtn")){
         }
 
 
-        // ---------------------------------------------
+        // =================================================
         // 选中文字状态
-        // ---------------------------------------------
+        // =================================================
 
         bgColorButton.classList.toggle(
             "active",
@@ -845,9 +859,10 @@ if($("textBgColorBtn")){
     }
 
 
+    // ========================================================
     // 初始按钮状态
+    // ========================================================
+
     updateHighlightButton();
 
 }
-
-
