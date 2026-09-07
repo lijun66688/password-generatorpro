@@ -124,6 +124,9 @@ if($("insertNoteTime")){
 // ============================================================
 // 笔记文字背景色 / 高亮
 //
+// ============================================================
+// 笔记文字背景色 / 高亮
+//
 // 功能：
 //
 // ① 光标模式
@@ -144,11 +147,6 @@ if($("insertNoteTime")){
 // ============================================================
 
 let noteBgMode = false;
-
-
-// ============================================================
-// T 按钮
-// ============================================================
 
 if($("textBgColorBtn")){
 
@@ -289,15 +287,7 @@ if($("textBgColorBtn")){
                 // =================================================
                 // 当前已经激活
                 //
-                // → 关闭后续输入背景色
-                //
-                // 关键：
-                // 不插入 \u200B 隐形字符。
-                //
-                // 建立一个透明背景的输入容器，
-                // 将光标放入透明容器。
-                //
-                // 后续输入文字继承透明背景。
+                // → 真正退出黄色输入节点
                 // =================================================
 
                 else{
@@ -317,6 +307,10 @@ if($("textBgColorBtn")){
                                 currentSelection.getRangeAt(0);
 
 
+                            // =================================================
+                            // 当前必须是编辑器内部的折叠光标
+                            // =================================================
+
                             if(
                                 currentRange.collapsed &&
                                 editor.contains(
@@ -324,54 +318,185 @@ if($("textBgColorBtn")){
                                 )
                             ){
 
-                                // 创建透明背景容器
-                                const span =
-                                    document.createElement(
-                                        "span"
+                                let currentNode =
+                                    currentRange.startContainer;
+
+
+                                // =================================================
+                                // 找到当前光标所在的黄色元素
+                                // =================================================
+
+                                let yellowElement = null;
+
+
+                                if(
+                                    currentNode.nodeType ===
+                                    Node.TEXT_NODE
+                                ){
+
+                                    currentNode =
+                                        currentNode.parentElement;
+
+                                }
+
+
+                                while(
+                                    currentNode &&
+                                    currentNode !== editor
+                                ){
+
+                                    const background =
+                                        getComputedStyle(
+                                            currentNode
+                                        )
+                                        .backgroundColor
+                                        .replace(/\s/g,"")
+                                        .toLowerCase();
+
+
+                                    if(
+                                        background ===
+                                        "rgb(255,245,157)"
+                                    ){
+
+                                        yellowElement =
+                                            currentNode;
+
+                                        break;
+
+                                    }
+
+
+                                    currentNode =
+                                        currentNode.parentElement;
+
+                                }
+
+
+                                // =================================================
+                                // 如果光标在黄色元素里面
+                                // 将黄色元素从光标位置拆开
+                                // =================================================
+
+                                if(yellowElement){
+
+                                    const afterRange =
+                                        document.createRange();
+
+
+                                    afterRange.selectNodeContents(
+                                        yellowElement
                                     );
 
 
-                                span.style.backgroundColor =
-                                    "transparent";
+                                    afterRange.setStart(
+                                        currentRange.startContainer,
+                                        currentRange.startOffset
+                                    );
 
 
-                                // 在当前光标位置插入
-                                currentRange.insertNode(
-                                    span
-                                );
+                                    // =================================================
+                                    // 提取光标后面的内容
+                                    // =================================================
+
+                                    const afterFragment =
+                                        afterRange.extractContents();
 
 
-                                // 创建新的光标位置
-                                const newRange =
-                                    document.createRange();
+                                    // =================================================
+                                    // 黄色元素后面插入普通内容
+                                    // =================================================
+
+                                    if(
+                                        afterFragment &&
+                                        afterFragment.childNodes.length
+                                    ){
+
+                                        yellowElement.parentNode.insertBefore(
+                                            afterFragment,
+                                            yellowElement.nextSibling
+                                        );
+
+                                    }
 
 
-                                newRange.selectNodeContents(
-                                    span
-                                );
+                                    // =================================================
+                                    // 重新定位光标
+                                    // 光标必须位于黄色元素外面
+                                    // =================================================
+
+                                    const newRange =
+                                        document.createRange();
 
 
-                                newRange.collapse(
-                                    true
-                                );
+                                    const nextNode =
+                                        yellowElement.nextSibling;
 
 
-                                currentSelection.removeAllRanges();
+                                    if(nextNode){
+
+                                        if(
+                                            nextNode.nodeType ===
+                                            Node.TEXT_NODE
+                                        ){
+
+                                            newRange.setStart(
+                                                nextNode,
+                                                0
+                                            );
+
+                                        }
+                                        else{
+
+                                            newRange.selectNodeContents(
+                                                nextNode
+                                            );
+
+                                            newRange.collapse(
+                                                true
+                                            );
+
+                                        }
+
+                                    }
+                                    else{
+
+                                        newRange.setStartAfter(
+                                            yellowElement
+                                        );
+
+                                    }
 
 
-                                currentSelection.addRange(
-                                    newRange
-                                );
+                                    newRange.collapse(
+                                        true
+                                    );
+
+
+                                    currentSelection.removeAllRanges();
+
+                                    currentSelection.addRange(
+                                        newRange
+                                    );
+
+                                }
 
                             }
 
                         }
 
-                    }catch(e){}
+                    }catch(e){
+
+                        console.error(
+                            "关闭笔记背景色输入模式失败：",
+                            e
+                        );
+
+                    }
 
 
                     // =================================================
-                    // 关闭背景色模式
+                    // 关闭模式
                     // =================================================
 
                     noteBgMode = false;
