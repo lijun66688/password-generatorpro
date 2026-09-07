@@ -124,531 +124,890 @@ if($("insertNoteTime")){
 // ============================================================
 // 笔记文字背景色 / 高亮
 //
-/* =========================================================
-   笔记文字背景高亮
-   功能：
-   1. 选中文字 → 点击 T → 黄色背景
-   2. 再次选择同样文字 → 点击 T → 取消黄色背景
-   3. 光标状态 → 点击 T → 开启黄色输入模式
-   4. 再点击 T → 关闭黄色输入模式
-   5. 开启黄色输入模式后，新输入的文字自动黄色
-   6. 关闭后，新输入文字恢复正常
-   7. 不修改文字颜色
-   8. 不使用 input 事件逐字 execCommand，避免输入卡顿
-   ========================================================= */
+// 功能：
+//
+// ① 光标模式
+// 光标放在文字后面
+// → 点击 T：激活背景色
+// → 后面输入的文字自动带黄色背景
+// → 再点击 T：取消激活
+// → 后面输入的文字不再带黄色背景
+//
+// ② 选中文字模式
+// 选中文字
+// → 点击 T：添加黄色背景
+// → 再点击 T：取消黄色背景
+//
+// 注意：
+// 不在 input 事件里面执行 execCommand。
+// 避免每输入一个字都重新处理 DOM，解决打字卡顿问题。
+// ============================================================
 
 let noteBgMode = false;
 
-const HIGHLIGHT_COLOR = "#fff59d";
+if($("textBgColorBtn")){
 
-/* ---------------------------------------------------------
-   保存当前选区
-   --------------------------------------------------------- */
+    const bgColorButton =
+        $("textBgColorBtn");
 
-let savedNoteRange = null;
-
-function saveNoteSelection() {
-    const editor = document.getElementById("noteEditor");
-    if (!editor) return;
-
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-
-    const range = selection.getRangeAt(0);
-
-    if (!editor.contains(range.commonAncestorContainer)) {
-        return;
-    }
-
-    savedNoteRange = range.cloneRange();
-}
+    const HIGHLIGHT_COLOR =
+        "#fff59d";
 
 
-/* ---------------------------------------------------------
-   恢复当前选区
-   --------------------------------------------------------- */
+    // ========================================================
+    // 点击 T 前保存当前光标 / 选区
+    // ========================================================
 
-function restoreNoteSelection() {
-    if (!savedNoteRange) return false;
+    bgColorButton.addEventListener(
+        "mousedown",
+        function(e){
 
-    const editor = document.getElementById("noteEditor");
-    if (!editor) return false;
+            e.preventDefault();
 
-    try {
-        if (!editor.contains(savedNoteRange.commonAncestorContainer)) {
-            return false;
-        }
+            saveNoteSelection();
 
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(savedNoteRange);
-
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-
-/* ---------------------------------------------------------
-   判断一个文字节点是否处于黄色背景中
-   --------------------------------------------------------- */
-
-function isTextNodeHighlighted(node) {
-    if (!node) return false;
-
-    let el = node.nodeType === Node.TEXT_NODE
-        ? node.parentElement
-        : node;
-
-    const editor = document.getElementById("noteEditor");
-
-    while (el && el !== editor) {
-        const style = window.getComputedStyle(el);
-
-        if (
-            style.backgroundColor === "rgb(255, 245, 157)" ||
-            style.backgroundColor === HIGHLIGHT_COLOR ||
-            style.backgroundColor === "#fff59d"
-        ) {
-            return true;
-        }
-
-        el = el.parentElement;
-    }
-
-    return false;
-}
-
-
-/* ---------------------------------------------------------
-   判断选中的文字是否全部已经是黄色背景
-   --------------------------------------------------------- */
-
-function isRangeFullyYellow(range, editor) {
-    if (!range || range.collapsed) {
-        return false;
-    }
-
-    const fragment = range.cloneContents();
-
-    const walker = document.createTreeWalker(
-        fragment,
-        NodeFilter.SHOW_TEXT,
-        {
-            acceptNode(node) {
-                if (!node.nodeValue || !node.nodeValue.trim()) {
-                    return NodeFilter.FILTER_REJECT;
-                }
-
-                return NodeFilter.FILTER_ACCEPT;
-            }
         }
     );
 
-    let foundText = false;
-    let allYellow = true;
 
-    let node;
+    bgColorButton.addEventListener(
+        "touchstart",
+        function(){
 
-    while ((node = walker.nextNode())) {
-        foundText = true;
+            saveNoteSelection();
 
-        let parent = node.parentElement;
-        let yellow = false;
+        },
+        {
+            passive:true
+        }
+    );
 
-        while (parent) {
-            const style = window.getComputedStyle(parent);
 
-            if (
-                style.backgroundColor === "rgb(255, 245, 157)" ||
-                style.backgroundColor === HIGHLIGHT_COLOR ||
-                style.backgroundColor === "#fff59d"
-            ) {
-                yellow = true;
-                break;
+    // ========================================================
+    // T 按钮
+    // ========================================================
+
+    bgColorButton.addEventListener(
+        "click",
+        function(){
+
+            const editor =
+                getNoteEditor();
+
+            if(!editor){
+                return;
             }
 
-            parent = parent.parentElement;
-        }
 
-        if (!yellow) {
-            allYellow = false;
-            break;
-        }
-    }
+            // =================================================
+            // 恢复点击按钮之前的光标 / 选区
+            // =================================================
 
-    return foundText && allYellow;
-}
+            restoreNoteSelection();
 
 
-/* ---------------------------------------------------------
-   更新 T 按钮状态
-   --------------------------------------------------------- */
-
-function updateHighlightButton() {
-    const btn = document.getElementById("textBgColorBtn");
-    const editor = document.getElementById("noteEditor");
-
-    if (!btn || !editor) return;
-
-    const selection = window.getSelection();
-
-    if (!selection || selection.rangeCount === 0) {
-        btn.classList.toggle("active", noteBgMode);
-        return;
-    }
-
-    const range = selection.getRangeAt(0);
-
-    if (!editor.contains(range.commonAncestorContainer)) {
-        btn.classList.toggle("active", noteBgMode);
-        return;
-    }
-
-    /* 光标状态 */
-    if (range.collapsed) {
-        btn.classList.toggle("active", noteBgMode);
-        return;
-    }
-
-    /* 选中文字状态 */
-    const fullyYellow = isRangeFullyYellow(range, editor);
-
-    btn.classList.toggle("active", fullyYellow);
-}
+            const selection =
+                window.getSelection();
 
 
-/* ---------------------------------------------------------
-   T 按钮
-   --------------------------------------------------------- */
-
-const textBgColorBtn = document.getElementById("textBgColorBtn");
-
-if (textBgColorBtn) {
-
-    /* 鼠标按下前先保存选区 */
-    textBgColorBtn.addEventListener("mousedown", function () {
-        saveNoteSelection();
-    });
-
-    /* 手机触摸按下前保存选区 */
-    textBgColorBtn.addEventListener("touchstart", function () {
-        saveNoteSelection();
-    }, { passive: true });
+            if(
+                !selection ||
+                !selection.rangeCount
+            ){
+                return;
+            }
 
 
-    textBgColorBtn.addEventListener("click", function () {
-
-        const editor = document.getElementById("noteEditor");
-
-        if (!editor) return;
-
-        /*
-         * 点击按钮后恢复之前的选区。
-         * 这样鼠标点击按钮不会让编辑器原来的选区丢失。
-         */
-        restoreNoteSelection();
-
-        const selection = window.getSelection();
-
-        if (!selection || selection.rangeCount === 0) {
-            return;
-        }
-
-        const range = selection.getRangeAt(0);
-
-        if (!editor.contains(range.commonAncestorContainer)) {
-            return;
-        }
+            const range =
+                selection.getRangeAt(0);
 
 
-        /* =================================================
-           情况一：只有光标，没有选中文字
-           ================================================= */
+            // =================================================
+            // 确保操作发生在笔记编辑器内部
+            // =================================================
 
-        if (range.collapsed) {
-
-            /*
-             * 这里非常重要：
-             *
-             * 不再使用：
-             * execCommand("backColor")
-             *
-             * 因为部分浏览器虽然按钮看起来已经开启，
-             * 但后续输入并不会真正继承背景色。
-             *
-             * 现在改成 noteBgMode 状态控制。
-             *
-             * 真正输入文字时，由 beforeinput 直接把文字
-             * 放进黄色 span。
-             */
-
-            noteBgMode = !noteBgMode;
-
-            updateHighlightButton();
-
-            return;
-        }
+            if(
+                !editor.contains(
+                    range.commonAncestorContainer
+                )
+            ){
+                return;
+            }
 
 
-        /* =================================================
-           情况二：选中了文字
-           ================================================= */
+            // =================================================
+            // 情况 1：光标模式
+            // =================================================
 
-        const fullyYellow = isRangeFullyYellow(range, editor);
+            if(range.collapsed){
 
-        /*
-         * 选区已经全部黄色
-         * → 取消黄色
-         */
+                // =================================================
+                // 当前没有激活
+                //
+                // → 开启黄色输入模式
+                // =================================================
 
-        if (fullyYellow) {
+                if(!noteBgMode){
 
-            document.execCommand("styleWithCSS", false, true);
+                    try{
 
-            document.execCommand(
-                "backColor",
-                false,
-                "transparent"
-            );
+                        document.execCommand(
+                            "styleWithCSS",
+                            false,
+                            true
+                        );
+
+                    }catch(e){}
+
+
+                    try{
+
+                        document.execCommand(
+                            "backColor",
+                            false,
+                            HIGHLIGHT_COLOR
+                        );
+
+                    }catch(e){}
+
+
+                    noteBgMode = true;
+
+
+                    bgColorButton.classList.add(
+                        "active"
+                    );
+
+                }
+
+
+                // =================================================
+                // 当前已经激活
+                //
+                // → 关闭黄色输入模式
+                //
+                // 这里不再修改 DOM。
+                //
+                // 也不插入透明 span。
+                //
+                // 也不执行 backColor("transparent")。
+                //
+                // 只关闭 noteBgMode。
+                //
+                // 下一次输入由 beforeinput 负责确保
+                // 新文字不会继续继承黄色背景。
+                // =================================================
+
+                else{
+
+                    noteBgMode = false;
+
+
+                    bgColorButton.classList.remove(
+                        "active"
+                    );
+
+                }
+
+
+                // =================================================
+                // 焦点回编辑器
+                // =================================================
+
+                editor.focus();
+
+
+                return;
+
+            }
+
+
+            // =================================================
+            // 情况 2：选中文字
+            // =================================================
+
+            const selectedText =
+                range.toString();
+
+
+            if(!selectedText){
+                return;
+            }
+
+
+            // =================================================
+            // 判断选中的文字是否已经全部黄色
+            // =================================================
+
+            const alreadyYellow =
+                isRangeFullyYellow(
+                    range,
+                    editor
+                );
+
+
+            try{
+
+                document.execCommand(
+                    "styleWithCSS",
+                    false,
+                    true
+                );
+
+            }catch(e){}
+
+
+            let changed = false;
+
+
+            // =================================================
+            // 已经黄色
+            // → 取消黄色
+            // =================================================
+
+            if(alreadyYellow){
+
+                try{
+
+                    changed =
+                        document.execCommand(
+                            "backColor",
+                            false,
+                            "transparent"
+                        );
+
+                }catch(e){
+
+                    changed = false;
+
+                }
+
+            }
+
+
+            // =================================================
+            // 普通文字
+            // → 添加黄色
+            // =================================================
+
+            else{
+
+                try{
+
+                    changed =
+                        document.execCommand(
+                            "backColor",
+                            false,
+                            HIGHLIGHT_COLOR
+                        );
+
+                }catch(e){
+
+                    changed = false;
+
+                }
+
+            }
+
+
+            // =================================================
+            // 选中文字操作不改变后续输入模式
+            // =================================================
 
             noteBgMode = false;
 
-        } else {
 
-            /*
-             * 选区不是全部黄色
-             * → 设置黄色背景
-             */
-
-            document.execCommand("styleWithCSS", false, true);
-
-            document.execCommand(
-                "backColor",
-                false,
-                HIGHLIGHT_COLOR
+            bgColorButton.classList.remove(
+                "active"
             );
 
-            noteBgMode = false;
-        }
 
+            // =================================================
+            // 更新按钮状态
+            // =================================================
 
-        /* 保存新的选区 */
-        saveNoteSelection();
-
-        /* 更新按钮状态 */
-        updateHighlightButton();
-
-
-        /*
-         * 保持笔记已有的修改检测 / 自动保存逻辑。
-         * 这里不监听 input，因此不会产生逐字卡顿。
-         */
-        if (typeof noteHasChanges !== "undefined") {
-            noteHasChanges = true;
-        }
-
-        if (typeof scheduleNoteAutoSave === "function") {
-            scheduleNoteAutoSave();
-        }
-    });
-}
-
-
-/* =========================================================
-   黄色输入模式
-   ========================================================= */
-
-const noteEditor = document.getElementById("noteEditor");
-
-if (noteEditor) {
-
-    /*
-     * beforeinput：
-     *
-     * 只有在 noteBgMode = true 时拦截普通文字输入。
-     *
-     * 不使用 input 事件，所以不会出现：
-     *
-     * 输入 A
-     * → input
-     * → execCommand
-     * → 浏览器重新排版
-     * → 输入 B
-     * → input
-     * → execCommand
-     *
-     * 这种逐字卡顿。
-     */
-
-    noteEditor.addEventListener("beforeinput", function (e) {
-
-        if (!noteBgMode) {
-            return;
-        }
-
-        /*
-         * 只处理普通文字输入。
-         *
-         * 删除、Backspace、Enter、粘贴等操作
-         * 暂时全部交给浏览器原本的 contenteditable 行为。
-         */
-
-        if (e.inputType !== "insertText") {
-            return;
-        }
-
-        if (!e.data) {
-            return;
-        }
-
-        const selection = window.getSelection();
-
-        if (!selection || selection.rangeCount === 0) {
-            return;
-        }
-
-        const range = selection.getRangeAt(0);
-
-        if (!range.collapsed) {
-            return;
-        }
-
-        if (!noteEditor.contains(range.commonAncestorContainer)) {
-            return;
-        }
-
-
-        /*
-         * 阻止浏览器直接插入文字。
-         */
-
-        e.preventDefault();
-
-
-        /*
-         * 创建黄色 span。
-         */
-
-        const span = document.createElement("span");
-
-        span.style.backgroundColor = HIGHLIGHT_COLOR;
-
-
-        /*
-         * 把本次输入的文字放进去。
-         */
-
-        const textNode = document.createTextNode(e.data);
-
-        span.appendChild(textNode);
-
-
-        /*
-         * 插入到当前光标位置。
-         */
-
-        range.insertNode(span);
-
-
-        /*
-         * 把光标移动到刚刚输入的文字后面。
-         */
-
-        const newRange = document.createRange();
-
-        newRange.setStartAfter(span);
-        newRange.collapse(true);
-
-        selection.removeAllRanges();
-        selection.addRange(newRange);
-
-
-        /*
-         * 保存当前选区。
-         */
-
-        savedNoteRange = newRange.cloneRange();
-
-
-        /*
-         * 标记笔记发生修改。
-         */
-
-        if (typeof noteHasChanges !== "undefined") {
-            noteHasChanges = true;
-        }
-
-
-        /*
-         * 保持原来的自动保存机制。
-         */
-
-        if (typeof scheduleNoteAutoSave === "function") {
-            scheduleNoteAutoSave();
-        }
-
-
-        /*
-         * 更新 T 按钮状态。
-         */
-
-        updateHighlightButton();
-    });
-
-
-    /* -----------------------------------------------------
-       鼠标操作后更新按钮
-       ----------------------------------------------------- */
-
-    noteEditor.addEventListener("mouseup", function () {
-        saveNoteSelection();
-        updateHighlightButton();
-    });
-
-
-    /* -----------------------------------------------------
-       键盘操作后更新按钮
-       ----------------------------------------------------- */
-
-    noteEditor.addEventListener("keyup", function () {
-        saveNoteSelection();
-        updateHighlightButton();
-    });
-
-
-    /* -----------------------------------------------------
-       手机触摸操作后更新按钮
-       ----------------------------------------------------- */
-
-    noteEditor.addEventListener("touchend", function () {
-        setTimeout(function () {
-            saveNoteSelection();
             updateHighlightButton();
-        }, 0);
-    }, { passive: true });
 
 
-    /* -----------------------------------------------------
-       获得焦点时更新按钮
-       ----------------------------------------------------- */
+            // =================================================
+            // 标记笔记修改
+            // =================================================
 
-    noteEditor.addEventListener("focus", function () {
-        updateHighlightButton();
-    });
+            if(changed){
+
+                if(
+                    typeof noteHasChanges !==
+                    "undefined"
+                ){
+
+                    noteHasChanges = true;
+
+                }
 
 
-    /* -----------------------------------------------------
-       点击编辑器时更新按钮
-       ----------------------------------------------------- */
+                if(
+                    typeof scheduleNoteAutoSave ===
+                    "function"
+                ){
 
-    noteEditor.addEventListener("click", function () {
-        setTimeout(function () {
-            saveNoteSelection();
-            updateHighlightButton();
-        }, 0);
-    });
+                    scheduleNoteAutoSave();
+
+                }
+
+            }
+
+        }
+    );
+
+
+    // ========================================================
+    // 关键：
+    // 处理关闭 T 后的第一次文字输入
+    //
+    // 浏览器 contenteditable 可能仍然保留之前的
+    // 黄色 typing state。
+    //
+    // 所以：
+    //
+    // T 关闭
+    // ↓
+    // 浏览器准备插入下一段文字
+    // ↓
+    // beforeinput 拦截
+    // ↓
+    // 如果当前输入模式已经关闭
+    // ↓
+    // 直接插入普通 Text Node
+    //
+    // 这样不会执行 input + execCommand，
+    // 不会每个字重新格式化。
+    // ========================================================
+
+    const noteEditor =
+        getNoteEditor();
+
+
+    if(noteEditor){
+
+        noteEditor.addEventListener(
+            "beforeinput",
+            function(e){
+
+                // =================================================
+                // 只有关闭 T 后才需要处理
+                // =================================================
+
+                if(noteBgMode){
+                    return;
+                }
+
+
+                // =================================================
+                // 只处理普通文字输入
+                //
+                // 不干涉：
+                // 删除
+                // 回车
+                // 粘贴
+                // 图片
+                // 其他编辑操作
+                // =================================================
+
+                if(
+                    e.inputType !==
+                    "insertText"
+                ){
+                    return;
+                }
+
+
+                if(
+                    typeof e.data !==
+                    "string" ||
+                    !e.data
+                ){
+                    return;
+                }
+
+
+                const selection =
+                    window.getSelection();
+
+
+                if(
+                    !selection ||
+                    !selection.rangeCount
+                ){
+                    return;
+                }
+
+
+                const range =
+                    selection.getRangeAt(0);
+
+
+                if(!range.collapsed){
+                    return;
+                }
+
+
+                if(
+                    !noteEditor.contains(
+                        range.commonAncestorContainer
+                    )
+                ){
+                    return;
+                }
+
+
+                // =================================================
+                // 判断当前光标是否仍然位于黄色元素里面
+                // =================================================
+
+                let node =
+                    range.startContainer;
+
+
+                if(
+                    node.nodeType ===
+                    Node.TEXT_NODE
+                ){
+
+                    node =
+                        node.parentElement;
+
+                }
+
+
+                let yellowElement = null;
+
+
+                while(
+                    node &&
+                    node !== noteEditor
+                ){
+
+                    const background =
+                        getComputedStyle(
+                            node
+                        )
+                        .backgroundColor
+                        .replace(/\s/g,"")
+                        .toLowerCase();
+
+
+                    if(
+                        background ===
+                        "rgb(255,245,157)"
+                    ){
+
+                        yellowElement =
+                            node;
+
+                        break;
+
+                    }
+
+
+                    node =
+                        node.parentElement;
+
+                }
+
+
+                // =================================================
+                // 如果当前光标不在黄色元素里
+                //
+                // 浏览器已经正常恢复普通输入，
+                // 不需要干涉。
+                // =================================================
+
+                if(!yellowElement){
+                    return;
+                }
+
+
+                // =================================================
+                // 浏览器仍然处于黄色输入节点
+                //
+                // 阻止浏览器默认插入
+                // =================================================
+
+                e.preventDefault();
+
+
+                try{
+
+                    const textNode =
+                        document.createTextNode(
+                            e.data
+                        );
+
+
+                    range.insertNode(
+                        textNode
+                    );
+
+
+                    // =================================================
+                    // 光标移动到新文字后面
+                    // =================================================
+
+                    const newRange =
+                        document.createRange();
+
+
+                    newRange.setStart(
+                        textNode,
+                        textNode.nodeValue.length
+                    );
+
+
+                    newRange.collapse(
+                        true
+                    );
+
+
+                    selection.removeAllRanges();
+
+                    selection.addRange(
+                        newRange
+                    );
+
+
+                }catch(error){
+
+                    console.error(
+                        "普通文字输入恢复失败：",
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+        // ========================================================
+        // 编辑器状态监听
+        // ========================================================
+
+        noteEditor.addEventListener(
+            "mouseup",
+            function(){
+
+                updateHighlightButton();
+
+            }
+        );
+
+
+        noteEditor.addEventListener(
+            "keyup",
+            function(){
+
+                updateHighlightButton();
+
+            }
+        );
+
+
+        noteEditor.addEventListener(
+            "touchend",
+            function(){
+
+                setTimeout(
+                    updateHighlightButton,
+                    50
+                );
+
+            }
+        );
+
+
+        noteEditor.addEventListener(
+            "focus",
+            function(){
+
+                updateHighlightButton();
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // 判断选区是否全部是黄色背景
+    // ========================================================
+
+    function isRangeFullyYellow(
+        range,
+        editor
+    ){
+
+        const walker =
+            document.createTreeWalker(
+                editor,
+                NodeFilter.SHOW_TEXT,
+                null
+            );
+
+
+        let node;
+
+        let hasText = false;
+
+
+        while(
+            node = walker.nextNode()
+        ){
+
+            if(
+                !node.nodeValue ||
+                !node.nodeValue.trim()
+            ){
+
+                continue;
+
+            }
+
+
+            let intersects = false;
+
+
+            try{
+
+                intersects =
+                    range.intersectsNode(
+                        node
+                    );
+
+            }catch(e){
+
+                intersects = false;
+
+            }
+
+
+            if(!intersects){
+                continue;
+            }
+
+
+            let start = 0;
+
+            let end =
+                node.nodeValue.length;
+
+
+            if(
+                node ===
+                range.startContainer
+            ){
+
+                start =
+                    range.startOffset;
+
+            }
+
+
+            if(
+                node ===
+                range.endContainer
+            ){
+
+                end =
+                    range.endOffset;
+
+            }
+
+
+            if(start >= end){
+                continue;
+            }
+
+
+            const selectedText =
+                node.nodeValue.substring(
+                    start,
+                    end
+                );
+
+
+            if(
+                !selectedText.trim()
+            ){
+
+                continue;
+
+            }
+
+
+            hasText = true;
+
+
+            let element =
+                node.parentElement;
+
+
+            let yellow = false;
+
+
+            while(
+                element &&
+                element !== editor
+            ){
+
+                const background =
+                    getComputedStyle(
+                        element
+                    )
+                    .backgroundColor
+                    .replace(/\s/g,"")
+                    .toLowerCase();
+
+
+                if(
+                    background ===
+                    "rgb(255,245,157)"
+                ){
+
+                    yellow = true;
+
+                    break;
+
+                }
+
+
+                if(
+                    background ===
+                    "#fff59d"
+                ){
+
+                    yellow = true;
+
+                    break;
+
+                }
+
+
+                element =
+                    element.parentElement;
+
+            }
+
+
+            if(!yellow){
+
+                return false;
+
+            }
+
+        }
+
+
+        return hasText;
+
+    }
+
+
+    // ========================================================
+    // 更新 T 按钮状态
+    // ========================================================
+
+    function updateHighlightButton(){
+
+        const editor =
+            getNoteEditor();
+
+
+        if(!editor){
+
+            bgColorButton.classList.remove(
+                "active"
+            );
+
+            return;
+
+        }
+
+
+        const selection =
+            window.getSelection();
+
+
+        if(
+            !selection ||
+            !selection.rangeCount
+        ){
+
+            bgColorButton.classList.toggle(
+                "active",
+                noteBgMode
+            );
+
+            return;
+
+        }
+
+
+        const range =
+            selection.getRangeAt(0);
+
+
+        if(
+            !editor.contains(
+                range.commonAncestorContainer
+            )
+        ){
+
+            bgColorButton.classList.toggle(
+                "active",
+                noteBgMode
+            );
+
+            return;
+
+        }
+
+
+        // =================================================
+        // 光标状态
+        // =================================================
+
+        if(range.collapsed){
+
+            bgColorButton.classList.toggle(
+                "active",
+                noteBgMode
+            );
+
+            return;
+
+        }
+
+
+        // =================================================
+        // 选中文字状态
+        // =================================================
+
+        bgColorButton.classList.toggle(
+            "active",
+            isRangeFullyYellow(
+                range,
+                editor
+            )
+        );
+
+    }
+
+
+    // ========================================================
+    // 初始按钮状态
+    // ========================================================
+
+    updateHighlightButton();
+
 }
-
 
