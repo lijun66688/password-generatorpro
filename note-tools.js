@@ -291,36 +291,100 @@ if($("textBgColorBtn")){
 
                 else{
 
-                    try{
+    // =====================================================
+    // 关闭背景色输入模式
+    //
+    // 不能只执行 backColor("transparent")，
+    // 因为 contenteditable 可能继续继承之前的黄色格式。
+    //
+    // 这里在当前光标位置建立一个透明背景的输入点，
+    // 让后续输入明确使用透明背景。
+    // =====================================================
 
-                        document.execCommand(
-                            "styleWithCSS",
-                            false,
-                            true
-                        );
+    try{
 
-                    }catch(e){}
+        document.execCommand(
+            "styleWithCSS",
+            false,
+            true
+        );
 
-
-                    try{
-
-                        document.execCommand(
-                            "backColor",
-                            false,
-                            "transparent"
-                        );
-
-                    }catch(e){}
-
-
-                    noteBgMode = false;
+    }catch(e){}
 
 
-                    bgColorButton.classList.remove(
-                        "active"
-                    );
+    try{
 
-                }
+        const selection =
+            window.getSelection();
+
+        if(
+            selection &&
+            selection.rangeCount
+        ){
+
+            const currentRange =
+                selection.getRangeAt(0);
+
+            if(
+                currentRange.collapsed &&
+                editor.contains(
+                    currentRange.commonAncestorContainer
+                )
+            ){
+
+                // 插入一个透明背景的临时输入节点
+                const span =
+                    document.createElement("span");
+
+                span.style.backgroundColor =
+                    "transparent";
+
+                span.appendChild(
+                    document.createTextNode("\u200B")
+                );
+
+
+                currentRange.insertNode(span);
+
+
+                // 把光标放到透明节点内部
+                const newRange =
+                    document.createRange();
+
+                newRange.setStart(
+                    span.firstChild,
+                    0
+                );
+
+                newRange.collapse(true);
+
+
+                selection.removeAllRanges();
+
+                selection.addRange(
+                    newRange
+                );
+
+            }
+
+        }
+
+    }catch(e){}
+
+
+    // 关闭模式
+    noteBgMode = false;
+
+
+    bgColorButton.classList.remove(
+        "active"
+    );
+
+
+    // 保持编辑器焦点
+    editor.focus();
+
+}
 
 
                 // 焦点回编辑器
