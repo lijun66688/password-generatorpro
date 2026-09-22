@@ -3030,6 +3030,9 @@ if($("saveNote")){
             alert(
                 "笔记修改成功"
             );
+            noteHasChanges = false;
+            await closeNoteEditor();
+            return;
 
         }
 
