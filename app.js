@@ -1565,7 +1565,7 @@ notes = uniqueNotes;
             </div>
 
 
-            <div class="note-card-preview">
+            <div class="note-card-preview" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
 
                 ${
                     escapeNoteHTML(
