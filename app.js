@@ -1382,19 +1382,30 @@ notes = uniqueNotes;
 
     notes.sort((a,b)=>{
 
-        if(
-            Boolean(a.pinned) !==
-            Boolean(b.pinned)
-        ){
+    if(
+        Boolean(a.pinned) !==
+        Boolean(b.pinned)
+    ){
 
-            return b.pinned - a.pinned;
+        return b.pinned - a.pinned;
 
-        }
+    }
 
+    const timeA =
+        new Date(
+            a.updateTime ||
+            a.createTime
+        ).getTime();
 
-        return b.id - a.id;
+    const timeB =
+        new Date(
+            b.updateTime ||
+            b.createTime
+        ).getTime();
 
-    });
+    return timeB - timeA;
+
+});
 
 
 
@@ -1882,21 +1893,32 @@ async function getNotePageList(){
 
     notes =
         [...notes]
-        .sort((a,b)=>{
+        notes.sort((a,b)=>{
 
-            if(
-                Boolean(a.pinned) !==
-                Boolean(b.pinned)
-            ){
+    if(
+        Boolean(a.pinned) !==
+        Boolean(b.pinned)
+    ){
 
-                return b.pinned - a.pinned;
+        return b.pinned - a.pinned;
 
-            }
+    }
 
+    const timeA =
+        new Date(
+            a.updateTime ||
+            a.createTime
+        ).getTime();
 
-            return b.id - a.id;
+    const timeB =
+        new Date(
+            b.updateTime ||
+            b.createTime
+        ).getTime();
 
-        });
+    return timeB - timeA;
+
+});
 
 
     return notes;
