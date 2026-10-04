@@ -10,6 +10,10 @@ let masterPassword = "";
 
 let vaultData = [];
 
+// 当前正在修改的密码库账号 ID
+// null = 新增模式
+let editingVaultId = null;
+
 
 // 当前编辑笔记ID
 let editingNoteId = null;
@@ -841,67 +845,78 @@ if(notesTab){
 
 
 if($("saveAccount")){
-
     $("saveAccount")
     .onclick=
     async()=>{
 
-        let item={
+        let site = $("siteName").value.trim();
+        let username = $("username").value.trim();
+        let password = $("vaultPassword").value;
+        let category = $("category").value;
 
-            id:
-                Date.now(),
-
-            site:
-                $("siteName")
-                .value
-                .trim(),
-
-            username:
-                $("username")
-                .value
-                .trim(),
-
-            password:
-                $("vaultPassword")
-                .value,
-
-            category:
-                $("category")
-                .value
-
-        };
-
-
-        if(!item.site){
-
-            alert(
-                "请输入网站名称"
-            );
-
+        if(!site){
+            alert("请输入网站名称");
             return;
-
         }
 
+        // ================================
+        // 修改已有账号
+        // ================================
+        if(editingVaultId !== null){
+
+            let item = vaultData.find(
+                x => x.id === editingVaultId
+            );
+
+            if(item){
+
+                item.site = site;
+                item.username = username;
+                item.password = password;
+                item.category = category;
+
+                await saveVault();
+
+                editingVaultId = null;
+
+                $("saveAccount").innerText = "保存账号";
+
+                $("siteName").value="";
+                $("username").value="";
+                $("vaultPassword").value="";
+
+                renderVault();
+                updateHealth();
+
+                alert("账号密码修改成功");
+
+                return;
+            }
+        }
+
+        // ================================
+        // 新增账号
+        // ================================
+
+        let item={
+            id: Date.now(),
+            site: site,
+            username: username,
+            password: password,
+            category: category
+        };
 
         vaultData.unshift(item);
 
-
         await saveVault();
 
-
         $("siteName").value="";
-
         $("username").value="";
-
         $("vaultPassword").value="";
 
-
         renderVault();
-
         updateHealth();
-
     };
-
 }
 
 
@@ -1026,6 +1041,8 @@ class="password-mask">
 
 </button>
 
+<button class="editBtn">✏ 修改</button>
+
 
 <button class="deleteBtn">
 
@@ -1083,38 +1100,61 @@ class="password-mask">
             };
 
 
+div.querySelector(".editBtn").onclick=()=>{
+
+    // 记录当前正在修改的账号
+    editingVaultId = item.id;
+
+    // 把账号信息填回输入框
+    $("siteName").value = item.site || "";
+    $("username").value = item.username || "";
+    $("vaultPassword").value = item.password || "";
+    $("category").value = item.category || "";
+
+    // 修改保存按钮文字
+    $("saveAccount").innerText = "保存修改";
+
+    // 自动滚动到编辑区域
+    $("siteName").scrollIntoView({
+        behavior:"smooth",
+        block:"center"
+    });
+
+    // 光标放到网站名称
+    $("siteName").focus();
+};
 
 
-            div.querySelector(
-                ".deleteBtn"
-            )
-            .onclick=
-            async()=>{
-
-                if(
-                    confirm(
-                        "确定删除这个账号？"
-                    )
-                ){
-
-                    vaultData =
-                        vaultData.filter(
-                            x =>
-                                x.id !==
-                                item.id
-                        );
 
 
-                    await saveVault();
+
+            div.querySelector(".deleteBtn").onclick=async()=>{
+    if(confirm("确定删除这个账号？")){
+
+        vaultData = vaultData.filter(
+            x => x.id !== item.id
+        );
+
+        // 如果删除的正好是当前正在修改的账号
+        if(editingVaultId === item.id){
+
+            editingVaultId = null;
+
+            $("saveAccount").innerText = "保存账号";
+
+            $("siteName").value="";
+            $("username").value="";
+            $("vaultPassword").value="";
+        }
+
+        await saveVault();
+
+        renderVault();
+        updateHealth();
+    }
+};
 
 
-                    renderVault();
-
-                    updateHealth();
-
-                }
-
-            };
 
 
             list.appendChild(div);
@@ -5041,6 +5081,5 @@ document.addEventListener(
     },
     { passive: false }
 );
-
 
 
