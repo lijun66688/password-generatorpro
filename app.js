@@ -4348,19 +4348,26 @@ function handleNoteEnter(e){
 
 function handleTodoCheck(e){
 
-    const target =
-        e.target;
+    const target = e.target;
 
-
+    // 只处理笔记编辑器中的清单方框
     if(
         !target.matches(
             "#noteEditor input[type='checkbox']"
         )
-    )
-
+    ){
         return;
+    }
 
+    // 关键修复：把当前勾选状态写入 HTML 属性
+    // 否则保存 innerHTML 时，勾选状态可能丢失
+    if(target.checked){
+        target.setAttribute("checked", "checked");
+    }else{
+        target.removeAttribute("checked");
+    }
 
+    // 标记笔记有修改，并触发自动保存
     scheduleNoteAutoSave();
 
 }
