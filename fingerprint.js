@@ -42,7 +42,7 @@ const FingerprintManager = (() => {
                 ),
                 rp: {
                     name: "Secure Vault Pro",
-                    id: "lijun66688.github.io"
+                    id: location.hostname
                     },
                 user: {
                     id: crypto.getRandomValues(
