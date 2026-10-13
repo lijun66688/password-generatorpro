@@ -55,7 +55,7 @@ const FingerprintManager = (() => {
                     { type: "public-key", alg: -7 }
                 ],
                 authenticatorSelection: {
-                    authenticatorAttachment: "platform",
+                   
                     userVerification: "required"
                 },
                 timeout: 60000,
