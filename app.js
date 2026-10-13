@@ -5090,23 +5090,3 @@ document.addEventListener(
 );
 
 
-document.getElementById("enableFingerprintBtn")
-    ?.addEventListener("click", async () => {
-        try {
-            await FingerprintManager.register();
-            alert("Touch ID 注册成功！");
-        } catch (e) {
-            alert("注册失败：" + e.message);
-        }
-    });
-
-document.getElementById("testFingerprintBtn")
-    ?.addEventListener("click", async () => {
-        try {
-            await FingerprintManager.authenticate();
-            alert("Touch ID 验证成功！");
-        } catch (e) {
-            alert("验证失败：" + e.message);
-        }
-    });
-
