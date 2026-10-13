@@ -169,3 +169,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+
+document.getElementById("testPRFBtn")
+?.addEventListener("click", async () => {
+    const result = {
+        secureContext: window.isSecureContext,
+        webAuthn: !!window.PublicKeyCredential,
+        credentialsAPI: !!navigator.credentials,
+        prfAPI: false
+    };
+
+    if (window.PublicKeyCredential?.getClientCapabilities) {
+        try {
+            const caps =
+                await PublicKeyCredential.getClientCapabilities();
+            result.prfAPI = !!caps.prf;
+        } catch (e) {
+            result.prfError = e.message;
+        }
+    }
+
+    alert(JSON.stringify(result, null, 2));
+});
