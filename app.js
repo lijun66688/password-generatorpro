@@ -1931,9 +1931,7 @@ async function getNotePageList(){
     notes = uniqueNotes;
 
 
-    notes =
-        [...notes]
-        notes.sort((a,b)=>{
+    notes = [...notes].sort((a, b) => {
 
     if(
         Boolean(a.pinned) !==
