@@ -2494,6 +2494,15 @@ async function createNewNotePage(){
     noteEditMode =
         true;
 
+    // 重新显示笔记标题框、编辑框和操作按钮
+const titleBox = $("noteTitle")?.closest(".box");
+const editorBox = $("noteEditor")?.closest(".box");
+const buttons = $("saveNote")?.closest(".btns");
+
+if (titleBox) titleBox.style.display = "";
+if (editorBox) editorBox.style.display = "";
+if (buttons) buttons.style.display = "";
+
 
     if($("noteTitle")){
 
